@@ -2,6 +2,7 @@
 
 members = [
     "rk_cad",
+    "rk_calc", "rk_step_parser",
 ]
 resolver = "2"
 

@@ -1,5 +1,5 @@
 [package]
-name = "rk_cad"
+name = "rk_step_parser"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
@@ -7,3 +7,5 @@ description.workspace = true
 
 [dependencies]
 rk_calc = { path = "../rk_calc" }
+rk_cad = { path = "../rk_cad" }
+regex = "1.11"
