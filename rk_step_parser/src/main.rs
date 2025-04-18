@@ -41,5 +41,8 @@ fn main() {
         process::exit(1);
     }
 
-    println!("STEP file processed successfully. Output written to {}", output_file);
+    println!(
+        "STEP file processed successfully. Output written to {}",
+        output_file
+    );
 }

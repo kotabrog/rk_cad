@@ -1,6 +1,10 @@
 // rk_calc/src/lib.rs
 // 基本的なベクトルや点を表すためのモジュール
 
+mod point3;
+
+pub use point3::Point3;
+
 /// 3次元のベクトル・点を表現する構造体
 #[derive(Debug, Copy, Clone, PartialEq)]
 pub struct Vector3 {

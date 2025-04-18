@@ -1,8 +1,8 @@
 use regex::Regex;
 use std::error::Error;
 
-use rk_calc::Vector3;
 use rk_cad::{Block, CadModel};
+use rk_calc::Vector3;
 
 /// FreeCADで出力された立方体 STEP ファイルからジオメトリ情報を抽出し、
 /// 抽出した CARTESIAN_POINT 値からバウンディングボックスを作成して Block として返す。
@@ -14,7 +14,7 @@ pub fn parse_step(content: &str) -> Result<CadModel, Box<dyn Error>> {
     // 行頭に "#" 番号、"="、"CARTESIAN_POINT" の記述を仮定し、
     // 第二引数の座標情報をキャプチャする。
     let re = Regex::new(
-        r#"(?m)^#\d+\s*=\s*CARTESIAN_POINT\(\s*'[^']*'\s*,\s*\(\s*([^)]*)\s*\)\s*\)\s*;"#
+        r#"(?m)^#\d+\s*=\s*CARTESIAN_POINT\(\s*'[^']*'\s*,\s*\(\s*([^)]*)\s*\)\s*\)\s*;"#,
     )?;
 
     let mut points: Vec<(f64, f64, f64)> = Vec::new();
@@ -40,12 +40,24 @@ pub fn parse_step(content: &str) -> Result<CadModel, Box<dyn Error>> {
     let (mut min_x, mut min_y, mut min_z) = (points[0].0, points[0].1, points[0].2);
     let (mut max_x, mut max_y, mut max_z) = (points[0].0, points[0].1, points[0].2);
     for &(x, y, z) in &points {
-        if x < min_x { min_x = x; }
-        if y < min_y { min_y = y; }
-        if z < min_z { min_z = z; }
-        if x > max_x { max_x = x; }
-        if y > max_y { max_y = y; }
-        if z > max_z { max_z = z; }
+        if x < min_x {
+            min_x = x;
+        }
+        if y < min_y {
+            min_y = y;
+        }
+        if z < min_z {
+            min_z = z;
+        }
+        if x > max_x {
+            max_x = x;
+        }
+        if y > max_y {
+            max_y = y;
+        }
+        if z > max_z {
+            max_z = z;
+        }
     }
 
     // バウンディングボックスの原点と寸法

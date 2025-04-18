@@ -22,7 +22,8 @@ pub fn write_step(model: &CadModel) -> String {
     // ※ 改行や空白、エンティティ番号はテンプレートの内容に合わせています。
     // 本来、STEP ファイル生成はエンティティ間の参照解決などが必要ですが、今回は単一立方体の出力例として
     // テンプレートに対する置換処理で実現しています。
-    let step_str = format!(r#"ISO-10303-21;
+    let step_str = format!(
+        r#"ISO-10303-21;
 HEADER;
 FILE_DESCRIPTION(('FreeCAD Minimal Cube'),'2;1');
 FILE_NAME('Cube.step','{timestamp}',(''),(''),'Open CASCADE STEP processor','FreeCAD','Unknown');
@@ -214,14 +215,14 @@ DATA;
 ENDSEC;
 END-ISO-10303-21;
 "#,
-       timestamp = timestamp,
-       name = block.name,
-       ox = ox,
-       oy = oy,
-       oz = oz,
-       ox_plus_dx = ox_plus_dx,
-       oy_plus_dy = oy_plus_dy,
-       oz_plus_dz = oz_plus_dz
-   );
+        timestamp = timestamp,
+        name = block.name,
+        ox = ox,
+        oy = oy,
+        oz = oz,
+        ox_plus_dx = ox_plus_dx,
+        oy_plus_dy = oy_plus_dy,
+        oz_plus_dz = oz_plus_dz
+    );
     step_str
 }
