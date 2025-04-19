@@ -4,12 +4,12 @@ use std::{
     rc::Rc,
 };
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct VertexData {
     /// 一意 ID
-    id: usize,
+    pub id: usize,
     /// 空間上の座標
-    point: Point3,
+    pub point: Point3,
 }
 
 impl VertexData {
@@ -19,7 +19,7 @@ impl VertexData {
 }
 
 /// Rc<RefCell<VertexData>> をラップした型
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct Vertex(Rc<RefCell<VertexData>>);
 
 impl Vertex {
