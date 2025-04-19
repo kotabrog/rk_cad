@@ -1,9 +1,10 @@
 // rk_cad/src/lib.rs
 //! CADライブラリ。ここでは簡単な立方体（Block）の定義と、CADモデル(CadModel)の管理を行います。
 
-mod topo;
+pub mod topo;
 
 use rk_calc::Vector3;
+pub use topo::{Edge, Vertex};
 
 /// CADの形状に共通する振る舞いを定義するトレイト。
 pub trait Shape {
