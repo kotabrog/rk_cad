@@ -103,14 +103,14 @@ impl Loop {
 mod tests {
     use super::super::{Edge, Vertex};
     use super::*;
-    use rk_calc::Point3;
+    use rk_calc::Vector3;
 
     #[test]
     fn wire_new() {
-        let v1 = Vertex::new(1, Point3::new(0.0, 0.0, 0.0));
-        let v2 = Vertex::new(2, Point3::new(1.0, 0.0, 0.0));
-        let v3 = Vertex::new(3, Point3::new(1.0, 1.0, 0.0));
-        let v4 = Vertex::new(4, Point3::new(0.0, 1.0, 0.0));
+        let v1 = Vertex::new(1, Vector3::new(0.0, 0.0, 0.0));
+        let v2 = Vertex::new(2, Vector3::new(1.0, 0.0, 0.0));
+        let v3 = Vertex::new(3, Vector3::new(1.0, 1.0, 0.0));
+        let v4 = Vertex::new(4, Vector3::new(0.0, 1.0, 0.0));
 
         let e1 = Edge::new(0, &v1, &v2).unwrap();
         let e2 = Edge::new(1, &v2, &v3).unwrap();
@@ -134,10 +134,10 @@ mod tests {
     #[test]
     #[should_panic(expected = "EdgesNotContiguous")]
     fn wire_new_not_contiguous() {
-        let v1 = Vertex::new(1, Point3::new(0.0, 0.0, 0.0));
-        let v2 = Vertex::new(2, Point3::new(1.0, 0.0, 0.0));
-        let v3 = Vertex::new(3, Point3::new(1.0, 1.0, 0.0));
-        let v4 = Vertex::new(4, Point3::new(0.0, 1.0, 0.0));
+        let v1 = Vertex::new(1, Vector3::new(0.0, 0.0, 0.0));
+        let v2 = Vertex::new(2, Vector3::new(1.0, 0.0, 0.0));
+        let v3 = Vertex::new(3, Vector3::new(1.0, 1.0, 0.0));
+        let v4 = Vertex::new(4, Vector3::new(0.0, 1.0, 0.0));
 
         let e1 = Edge::new(0, &v1, &v2).unwrap();
         let e2 = Edge::new(1, &v2, &v3).unwrap();
@@ -152,9 +152,9 @@ mod tests {
 
     #[test]
     fn checked_push() {
-        let v1 = Vertex::new(1, Point3::new(0.0, 0.0, 0.0));
-        let v2 = Vertex::new(2, Point3::new(1.0, 0.0, 0.0));
-        let v3 = Vertex::new(3, Point3::new(1.0, 1.0, 0.0));
+        let v1 = Vertex::new(1, Vector3::new(0.0, 0.0, 0.0));
+        let v2 = Vertex::new(2, Vector3::new(1.0, 0.0, 0.0));
+        let v3 = Vertex::new(3, Vector3::new(1.0, 1.0, 0.0));
 
         let e1 = Edge::new(0, &v1, &v2).unwrap();
         let e2 = Edge::new(1, &v2, &v3).unwrap();
@@ -170,9 +170,9 @@ mod tests {
     #[test]
     #[should_panic(expected = "EdgesNotContiguous")]
     fn checked_push_not_contiguous() {
-        let v1 = Vertex::new(1, Point3::new(0.0, 0.0, 0.0));
-        let v2 = Vertex::new(2, Point3::new(1.0, 0.0, 0.0));
-        let v3 = Vertex::new(3, Point3::new(1.0, 1.0, 0.0));
+        let v1 = Vertex::new(1, Vector3::new(0.0, 0.0, 0.0));
+        let v2 = Vertex::new(2, Vector3::new(1.0, 0.0, 0.0));
+        let v3 = Vertex::new(3, Vector3::new(1.0, 1.0, 0.0));
 
         let e1 = Edge::new(0, &v1, &v2).unwrap();
         let e2 = Edge::new(1, &v3, &v2).unwrap(); // v3 -> v2 は連続していない
@@ -186,10 +186,10 @@ mod tests {
 
     #[test]
     fn is_closed() {
-        let v1 = Vertex::new(1, Point3::new(0.0, 0.0, 0.0));
-        let v2 = Vertex::new(2, Point3::new(1.0, 0.0, 0.0));
-        let v3 = Vertex::new(3, Point3::new(1.0, 1.0, 0.0));
-        let v4 = Vertex::new(4, Point3::new(0.0, 1.0, 0.0));
+        let v1 = Vertex::new(1, Vector3::new(0.0, 0.0, 0.0));
+        let v2 = Vertex::new(2, Vector3::new(1.0, 0.0, 0.0));
+        let v3 = Vertex::new(3, Vector3::new(1.0, 1.0, 0.0));
+        let v4 = Vertex::new(4, Vector3::new(0.0, 1.0, 0.0));
 
         let e1 = Edge::new(0, &v1, &v2).unwrap();
         let e2 = Edge::new(1, &v2, &v3).unwrap();
@@ -207,9 +207,9 @@ mod tests {
 
     #[test]
     fn is_closed_not() {
-        let v1 = Vertex::new(1, Point3::new(0.0, 0.0, 0.0));
-        let v2 = Vertex::new(2, Point3::new(1.0, 0.0, 0.0));
-        let v3 = Vertex::new(3, Point3::new(1.0, 1.0, 0.0));
+        let v1 = Vertex::new(1, Vector3::new(0.0, 0.0, 0.0));
+        let v2 = Vertex::new(2, Vector3::new(1.0, 0.0, 0.0));
+        let v3 = Vertex::new(3, Vector3::new(1.0, 1.0, 0.0));
 
         let e1 = Edge::new(0, &v1, &v2).unwrap();
         let e2 = Edge::new(1, &v2, &v3).unwrap();
@@ -223,10 +223,10 @@ mod tests {
 
     #[test]
     fn build_loop() {
-        let v1 = Vertex::new(1, Point3::new(0.0, 0.0, 0.0));
-        let v2 = Vertex::new(2, Point3::new(1.0, 0.0, 0.0));
-        let v3 = Vertex::new(3, Point3::new(1.0, 1.0, 0.0));
-        let v4 = Vertex::new(4, Point3::new(0.0, 1.0, 0.0));
+        let v1 = Vertex::new(1, Vector3::new(0.0, 0.0, 0.0));
+        let v2 = Vertex::new(2, Vector3::new(1.0, 0.0, 0.0));
+        let v3 = Vertex::new(3, Vector3::new(1.0, 1.0, 0.0));
+        let v4 = Vertex::new(4, Vector3::new(0.0, 1.0, 0.0));
 
         let e1 = Edge::new(0, &v1, &v2).unwrap();
         let e2 = Edge::new(1, &v2, &v3).unwrap();
@@ -247,9 +247,9 @@ mod tests {
     #[test]
     #[should_panic(expected = "WireNotClosed")]
     fn build_loop_not_closed() {
-        let v1 = Vertex::new(1, Point3::new(0.0, 0.0, 0.0));
-        let v2 = Vertex::new(2, Point3::new(1.0, 0.0, 0.0));
-        let v3 = Vertex::new(3, Point3::new(1.0, 1.0, 0.0));
+        let v1 = Vertex::new(1, Vector3::new(0.0, 0.0, 0.0));
+        let v2 = Vertex::new(2, Vector3::new(1.0, 0.0, 0.0));
+        let v3 = Vertex::new(3, Vector3::new(1.0, 1.0, 0.0));
 
         let e1 = Edge::new(0, &v1, &v2).unwrap();
         let e2 = Edge::new(1, &v2, &v3).unwrap();
@@ -263,10 +263,10 @@ mod tests {
 
     #[test]
     fn to_wire() {
-        let v1 = Vertex::new(1, Point3::new(0.0, 0.0, 0.0));
-        let v2 = Vertex::new(2, Point3::new(1.0, 0.0, 0.0));
-        let v3 = Vertex::new(3, Point3::new(1.0, 1.0, 0.0));
-        let v4 = Vertex::new(4, Point3::new(0.0, 1.0, 0.0));
+        let v1 = Vertex::new(1, Vector3::new(0.0, 0.0, 0.0));
+        let v2 = Vertex::new(2, Vector3::new(1.0, 0.0, 0.0));
+        let v3 = Vertex::new(3, Vector3::new(1.0, 1.0, 0.0));
+        let v4 = Vertex::new(4, Vector3::new(0.0, 1.0, 0.0));
 
         let e1 = Edge::new(0, &v1, &v2).unwrap();
         let e2 = Edge::new(1, &v2, &v3).unwrap();

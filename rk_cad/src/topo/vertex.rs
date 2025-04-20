@@ -1,4 +1,4 @@
-use rk_calc::Point3;
+use rk_calc::Vector3;
 use std::{
     cell::{Ref, RefCell, RefMut},
     rc::Rc,
@@ -9,22 +9,25 @@ pub struct VertexData {
     /// 一意 ID
     pub id: usize,
     /// 空間上の座標
-    pub point: Point3,
+    pub point: Vector3,
 }
 
 impl VertexData {
-    fn new(id: usize, point: Point3) -> Self {
+    fn new(id: usize, point: Vector3) -> Self {
         VertexData { id, point }
     }
 }
 
 /// Rc<RefCell<VertexData>> をラップした型
+/// トポロジ検証予定：
+/// - ID の重複
+/// - 座標の数値範囲・特異点検出
 #[derive(Clone, Debug, PartialEq)]
 pub struct Vertex(Rc<RefCell<VertexData>>);
 
 impl Vertex {
     /// 新しい Vertex を生成
-    pub fn new(id: usize, point: Point3) -> Self {
+    pub fn new(id: usize, point: Vector3) -> Self {
         Vertex(Rc::new(RefCell::new(VertexData::new(id, point))))
     }
 
@@ -34,12 +37,12 @@ impl Vertex {
     }
 
     /// 座標を取得
-    pub fn point(&self) -> Point3 {
+    pub fn point(&self) -> Vector3 {
         self.0.borrow().point
     }
 
     /// 座標を更新
-    pub fn set_point(&self, p: Point3) {
+    pub fn set_point(&self, p: Vector3) {
         self.0.borrow_mut().point = p;
     }
 
@@ -72,11 +75,11 @@ impl Vertex {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use rk_calc::Point3;
+    use rk_calc::Vector3;
 
     #[test]
     fn vertex_new() {
-        let p = Point3::new(1.0, 2.0, 3.0);
+        let p = Vector3::new(1.0, 2.0, 3.0);
         let v = Vertex::new(1, p);
         assert_eq!(v.id(), 1);
         assert_eq!(v.point().x, 1.0);
@@ -86,8 +89,8 @@ mod tests {
 
     #[test]
     fn vertex_set_point() {
-        let v = Vertex::new(1, Point3::new(1.0, 2.0, 3.0));
-        v.set_point(Point3::new(4.0, 5.0, 6.0));
+        let v = Vertex::new(1, Vector3::new(1.0, 2.0, 3.0));
+        v.set_point(Vector3::new(4.0, 5.0, 6.0));
         assert_eq!(v.point().x, 4.0);
         assert_eq!(v.point().y, 5.0);
         assert_eq!(v.point().z, 6.0);
@@ -95,7 +98,7 @@ mod tests {
 
     #[test]
     fn vertex_borrow() {
-        let v = Vertex::new(1, Point3::new(1.0, 2.0, 3.0));
+        let v = Vertex::new(1, Vector3::new(1.0, 2.0, 3.0));
         let borrowed = v.borrow();
         assert_eq!(borrowed.id, 1);
         assert_eq!(borrowed.point.x, 1.0);
@@ -105,10 +108,10 @@ mod tests {
 
     #[test]
     fn vertex_borrow_mut() {
-        let v = Vertex::new(1, Point3::new(1.0, 2.0, 3.0));
+        let v = Vertex::new(1, Vector3::new(1.0, 2.0, 3.0));
         {
             let mut borrowed = v.borrow_mut();
-            borrowed.point = Point3::new(4.0, 5.0, 6.0);
+            borrowed.point = Vector3::new(4.0, 5.0, 6.0);
         }
         assert_eq!(v.point().x, 4.0);
         assert_eq!(v.point().y, 5.0);
@@ -117,22 +120,22 @@ mod tests {
 
     #[test]
     fn vertex_same_id() {
-        let v1 = Vertex::new(1, Point3::new(1.0, 2.0, 3.0));
-        let v2 = Vertex::new(1, Point3::new(4.0, 5.0, 6.0));
+        let v1 = Vertex::new(1, Vector3::new(1.0, 2.0, 3.0));
+        let v2 = Vertex::new(1, Vector3::new(4.0, 5.0, 6.0));
         assert!(v1.same_id(&v2));
     }
 
     #[test]
     fn vertex_same_point() {
-        let v1 = Vertex::new(1, Point3::new(1.0, 2.0, 3.0));
-        let v2 = Vertex::new(2, Point3::new(1.0, 2.0, 3.0));
+        let v1 = Vertex::new(1, Vector3::new(1.0, 2.0, 3.0));
+        let v2 = Vertex::new(2, Vector3::new(1.0, 2.0, 3.0));
         assert!(v1.same_point(&v2));
     }
 
     #[test]
     fn vertex_distance() {
-        let v1 = Vertex::new(1, Point3::new(1.0, 2.0, 3.0));
-        let v2 = Vertex::new(2, Point3::new(4.0, 5.0, 6.0));
+        let v1 = Vertex::new(1, Vector3::new(1.0, 2.0, 3.0));
+        let v2 = Vertex::new(2, Vector3::new(4.0, 5.0, 6.0));
         assert_eq!(v1.distance(&v2), v1.point().distance(&v2.point()));
     }
 }

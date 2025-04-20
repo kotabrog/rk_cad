@@ -46,14 +46,14 @@ impl Face {
 mod tests {
     use super::super::{Edge, OrientedEdge, Vertex, Wire};
     use super::*;
-    use rk_calc::Point3;
+    use rk_calc::Vector3;
 
     #[test]
     fn face_new() {
-        let v1 = Vertex::new(1, Point3::new(0.0, 0.0, 0.0));
-        let v2 = Vertex::new(2, Point3::new(1.0, 0.0, 0.0));
-        let v3 = Vertex::new(3, Point3::new(1.0, 1.0, 0.0));
-        let v4 = Vertex::new(4, Point3::new(0.0, 1.0, 0.0));
+        let v1 = Vertex::new(1, Vector3::new(0.0, 0.0, 0.0));
+        let v2 = Vertex::new(2, Vector3::new(1.0, 0.0, 0.0));
+        let v3 = Vertex::new(3, Vector3::new(1.0, 1.0, 0.0));
+        let v4 = Vertex::new(4, Vector3::new(0.0, 1.0, 0.0));
 
         let e1 = Edge::new(1, &v1, &v2).unwrap();
         let e2 = Edge::new(2, &v2, &v3).unwrap();
@@ -77,10 +77,10 @@ mod tests {
 
     #[test]
     fn face_add_inner() {
-        let v1 = Vertex::new(1, Point3::new(0.0, 0.0, 0.0));
-        let v2 = Vertex::new(2, Point3::new(1.0, 0.0, 0.0));
-        let v3 = Vertex::new(3, Point3::new(1.0, 1.0, 0.0));
-        let v4 = Vertex::new(4, Point3::new(0.0, 1.0, 0.0));
+        let v1 = Vertex::new(1, Vector3::new(0.0, 0.0, 0.0));
+        let v2 = Vertex::new(2, Vector3::new(1.0, 0.0, 0.0));
+        let v3 = Vertex::new(3, Vector3::new(1.0, 1.0, 0.0));
+        let v4 = Vertex::new(4, Vector3::new(0.0, 1.0, 0.0));
 
         let e1 = Edge::new(1, &v1, &v2).unwrap();
         let e2 = Edge::new(2, &v2, &v3).unwrap();
@@ -97,10 +97,10 @@ mod tests {
 
         let face = Face::new(1, loop_outer.clone(), vec![]);
 
-        let v5 = Vertex::new(5, Point3::new(0.5, 0.5, 0.0));
-        let v6 = Vertex::new(6, Point3::new(0.75, 0.5, 0.0));
-        let v7 = Vertex::new(7, Point3::new(0.75, 0.75, 0.0));
-        let v8 = Vertex::new(8, Point3::new(0.5, 0.75, 0.0));
+        let v5 = Vertex::new(5, Vector3::new(0.5, 0.5, 0.0));
+        let v6 = Vertex::new(6, Vector3::new(0.75, 0.5, 0.0));
+        let v7 = Vertex::new(7, Vector3::new(0.75, 0.75, 0.0));
+        let v8 = Vertex::new(8, Vector3::new(0.5, 0.75, 0.0));
         let e5 = Edge::new(5, &v5, &v6).unwrap();
         let e6 = Edge::new(6, &v6, &v7).unwrap();
         let e7 = Edge::new(7, &v7, &v8).unwrap();

@@ -1,5 +1,5 @@
 use super::{TopoError, Vertex};
-use rk_calc::Point3;
+use rk_calc::Vector3;
 use std::{
     cell::{Ref, RefCell, RefMut},
     fmt,
@@ -19,7 +19,7 @@ impl EdgeData {
     /// 新しい EdgeData を生成。
     /// v1.id == v2.id の場合は Err を返す。
     fn new(id: usize, v1: &Vertex, v2: &Vertex) -> Result<Self, TopoError> {
-        if v1.id() == v2.id() {
+        if v1.same_id(v2) {
             Err(TopoError::EdgeEndpointsEqual)
         } else {
             Ok(EdgeData {
@@ -68,6 +68,11 @@ impl Edge {
         self.0.borrow_mut()
     }
 
+    /// 向き付きエッジを生成
+    pub fn to_oriented_edge(&self, forward: bool) -> OrientedEdge {
+        OrientedEdge::new(self.clone(), forward)
+    }
+
     /// Edge の長さ
     pub fn length(&self) -> f64 {
         let d = self.0.borrow();
@@ -75,7 +80,7 @@ impl Edge {
     }
 
     /// 両端頂点を平行移動
-    pub fn translate_endpoints(&self, delta: Point3) {
+    pub fn translate_endpoints(&self, delta: Vector3) {
         let d = self.0.borrow_mut();
         d.v1.set_point(d.v1.point() + delta);
         d.v2.set_point(d.v2.point() + delta);
@@ -140,12 +145,12 @@ impl Deref for OrientedEdge {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use rk_calc::Point3;
+    use rk_calc::Vector3;
 
     #[test]
     fn edge_new() {
-        let v1 = Vertex::new(1, Point3::new(0.0, 0.0, 0.0));
-        let v2 = Vertex::new(2, Point3::new(1.0, 1.0, 1.0));
+        let v1 = Vertex::new(1, Vector3::new(0.0, 0.0, 0.0));
+        let v2 = Vertex::new(2, Vector3::new(1.0, 1.0, 1.0));
         let edge = Edge::new(1, &v1, &v2).unwrap();
         assert_eq!(edge.id(), 1);
         assert_eq!(edge.v1().id(), 1);
@@ -154,8 +159,8 @@ mod tests {
 
     #[test]
     fn edge_borrow() {
-        let v1 = Vertex::new(1, Point3::new(0.0, 0.0, 0.0));
-        let v2 = Vertex::new(2, Point3::new(1.0, 1.0, 1.0));
+        let v1 = Vertex::new(1, Vector3::new(0.0, 0.0, 0.0));
+        let v2 = Vertex::new(2, Vector3::new(1.0, 1.0, 1.0));
         let edge = Edge::new(1, &v1, &v2).unwrap();
         let borrowed_edge = edge.borrow();
         assert_eq!(borrowed_edge.id, 1);
@@ -165,8 +170,8 @@ mod tests {
 
     #[test]
     fn edge_borrow_mut() {
-        let v1 = Vertex::new(1, Point3::new(0.0, 0.0, 0.0));
-        let v2 = Vertex::new(2, Point3::new(1.0, 1.0, 1.0));
+        let v1 = Vertex::new(1, Vector3::new(0.0, 0.0, 0.0));
+        let v2 = Vertex::new(2, Vector3::new(1.0, 1.0, 1.0));
         let edge = Edge::new(1, &v1, &v2).unwrap();
         let mut borrowed_edge = edge.borrow_mut();
         borrowed_edge.id = 2;
@@ -175,18 +180,18 @@ mod tests {
 
     #[test]
     fn edge_length() {
-        let v1 = Vertex::new(1, Point3::new(0.0, 0.0, 0.0));
-        let v2 = Vertex::new(2, Point3::new(3.0, 4.0, 0.0));
+        let v1 = Vertex::new(1, Vector3::new(0.0, 0.0, 0.0));
+        let v2 = Vertex::new(2, Vector3::new(3.0, 4.0, 0.0));
         let edge = Edge::new(1, &v1, &v2).unwrap();
         assert_eq!(edge.length(), 5.0);
     }
 
     #[test]
     fn edge_translate_endpoints() {
-        let v1 = Vertex::new(1, Point3::new(0.0, 0.0, 0.0));
-        let v2 = Vertex::new(2, Point3::new(1.0, 1.0, 1.0));
+        let v1 = Vertex::new(1, Vector3::new(0.0, 0.0, 0.0));
+        let v2 = Vertex::new(2, Vector3::new(1.0, 1.0, 1.0));
         let edge = Edge::new(1, &v1, &v2).unwrap();
-        edge.translate_endpoints(Point3::new(1.0, 2.0, 3.0));
+        edge.translate_endpoints(Vector3::new(1.0, 2.0, 3.0));
         assert_eq!(edge.v1().point().x, 1.0);
         assert_eq!(edge.v1().point().y, 2.0);
         assert_eq!(edge.v1().point().z, 3.0);
@@ -197,8 +202,8 @@ mod tests {
 
     #[test]
     fn oriented_edge_new() {
-        let v1 = Vertex::new(1, Point3::new(0.0, 0.0, 0.0));
-        let v2 = Vertex::new(2, Point3::new(1.0, 1.0, 1.0));
+        let v1 = Vertex::new(1, Vector3::new(0.0, 0.0, 0.0));
+        let v2 = Vertex::new(2, Vector3::new(1.0, 1.0, 1.0));
         let edge = Edge::new(1, &v1, &v2).unwrap();
         let oriented_edge = OrientedEdge::new(edge.clone(), true);
         assert_eq!(oriented_edge.start_id(), 1);
@@ -206,9 +211,19 @@ mod tests {
     }
 
     #[test]
+    fn to_oriented_edge() {
+        let v1 = Vertex::new(1, Vector3::new(0.0, 0.0, 0.0));
+        let v2 = Vertex::new(2, Vector3::new(1.0, 1.0, 1.0));
+        let edge = Edge::new(1, &v1, &v2).unwrap();
+        let oriented_edge = edge.to_oriented_edge(true);
+        assert_eq!(oriented_edge.start_id(), 1);
+        assert_eq!(oriented_edge.end_id(), 2);
+    }
+
+    #[test]
     fn oriented_edge_debug() {
-        let v1 = Vertex::new(1, Point3::new(0.0, 0.0, 0.0));
-        let v2 = Vertex::new(2, Point3::new(1.0, 1.0, 1.0));
+        let v1 = Vertex::new(1, Vector3::new(0.0, 0.0, 0.0));
+        let v2 = Vertex::new(2, Vector3::new(1.0, 1.0, 1.0));
         let edge = Edge::new(1, &v1, &v2).unwrap();
         let oriented_edge = OrientedEdge::new(edge.clone(), true);
         assert_eq!(
@@ -219,8 +234,8 @@ mod tests {
 
     #[test]
     fn oriented_edge_deref() {
-        let v1 = Vertex::new(1, Point3::new(0.0, 0.0, 0.0));
-        let v2 = Vertex::new(2, Point3::new(1.0, 1.0, 1.0));
+        let v1 = Vertex::new(1, Vector3::new(0.0, 0.0, 0.0));
+        let v2 = Vertex::new(2, Vector3::new(1.0, 1.0, 1.0));
         let edge = Edge::new(1, &v1, &v2).unwrap();
         let oriented_edge = OrientedEdge::new(edge.clone(), true);
         assert_eq!(oriented_edge.id(), 1);
