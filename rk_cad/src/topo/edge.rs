@@ -13,13 +13,13 @@ pub struct EdgeData {
     id: usize,
     v1: Vertex,
     v2: Vertex,
-    geometry: AnyCurve,
+    curve: AnyCurve,
 }
 
 impl EdgeData {
     /// 新しい EdgeData を生成。
     /// v1.id == v2.id の場合は Err を返す。
-    fn new(id: usize, v1: &Vertex, v2: &Vertex, geometry: AnyCurve) -> Result<Self, TopoError> {
+    fn new(id: usize, v1: &Vertex, v2: &Vertex, curve: AnyCurve) -> Result<Self, TopoError> {
         if v1.id() == v2.id() {
             return Err(TopoError::EdgeEndpointsEqual);
         }
@@ -27,7 +27,7 @@ impl EdgeData {
             id,
             v1: v1.clone(),
             v2: v2.clone(),
-            geometry,
+            curve,
         })
     }
 }
@@ -39,15 +39,18 @@ pub struct Edge(Rc<RefCell<EdgeData>>);
 impl Edge {
     /// 新しい Edge を生成。
     /// 同一頂点を両端に指定した場合は Err(TopoError::EdgeEndpointsEqual)。
-    pub fn new(id: usize, v1: &Vertex, v2: &Vertex, geometry: AnyCurve) -> Result<Self, TopoError> {
-        let data = EdgeData::new(id, v1, v2, geometry)?;
+    pub fn new<C>(id: usize, v1: &Vertex, v2: &Vertex, curve: C) -> Result<Self, TopoError>
+    where
+        C: Into<AnyCurve>,
+    {
+        let data = EdgeData::new(id, v1, v2, curve.into())?;
         Ok(Edge(Rc::new(RefCell::new(data))))
     }
 
     /// 線分 Edge の簡易ビルダー
     pub fn new_line(id: usize, v1: &Vertex, v2: &Vertex) -> Result<Self, TopoError> {
-        let geometry = AnyCurve::Line(LineCurve::new(v1.point(), v2.point()));
-        Self::new(id, v1, v2, geometry)
+        let curve = AnyCurve::Line(LineCurve::new(v1.point(), v2.point()));
+        Self::new(id, v1, v2, curve)
     }
 
     /// ID を取得
@@ -67,7 +70,7 @@ impl Edge {
 
     /// 曲線を取得
     pub fn curve(&self) -> AnyCurve {
-        self.0.borrow().geometry.clone()
+        self.0.borrow().curve.clone()
     }
 
     /// 内部データへの不変借用
@@ -82,7 +85,7 @@ impl Edge {
 
     /// Edge 上の曲線を借用
     pub fn borrow_curve(&self) -> Ref<'_, AnyCurve> {
-        Ref::map(self.0.borrow(), |d| &d.geometry)
+        Ref::map(self.0.borrow(), |d| &d.curve)
     }
 
     /// 向き付きエッジを生成
@@ -169,14 +172,14 @@ mod tests {
     fn edge_new() {
         let v1 = Vertex::new(1, Vector3::new(0.0, 0.0, 0.0));
         let v2 = Vertex::new(2, Vector3::new(1.0, 1.0, 1.0));
-        let curve = AnyCurve::Line(LineCurve::new(v1.point(), v2.point()));
+        let curve = LineCurve::new(v1.point(), v2.point());
         let edge = Edge::new(1, &v1, &v2, curve.clone());
         assert!(edge.is_ok());
         let edge = edge.unwrap();
         assert_eq!(edge.id(), 1);
         assert_eq!(edge.v1().id(), 1);
         assert_eq!(edge.v2().id(), 2);
-        assert_eq!(edge.curve(), curve);
+        assert_eq!(edge.curve(), curve.into());
     }
 
     #[test]
