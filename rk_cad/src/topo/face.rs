@@ -55,10 +55,10 @@ mod tests {
         let v3 = Vertex::new(3, Vector3::new(1.0, 1.0, 0.0));
         let v4 = Vertex::new(4, Vector3::new(0.0, 1.0, 0.0));
 
-        let e1 = Edge::new(1, &v1, &v2).unwrap();
-        let e2 = Edge::new(2, &v2, &v3).unwrap();
-        let e3 = Edge::new(3, &v3, &v4).unwrap();
-        let e4 = Edge::new(4, &v4, &v1).unwrap();
+        let e1 = Edge::new_line(1, &v1, &v2).unwrap();
+        let e2 = Edge::new_line(2, &v2, &v3).unwrap();
+        let e3 = Edge::new_line(3, &v3, &v4).unwrap();
+        let e4 = Edge::new_line(4, &v4, &v1).unwrap();
 
         let wire = Wire::new_unchecked(vec![
             OrientedEdge::new(e1.clone(), true),
@@ -82,10 +82,10 @@ mod tests {
         let v3 = Vertex::new(3, Vector3::new(1.0, 1.0, 0.0));
         let v4 = Vertex::new(4, Vector3::new(0.0, 1.0, 0.0));
 
-        let e1 = Edge::new(1, &v1, &v2).unwrap();
-        let e2 = Edge::new(2, &v2, &v3).unwrap();
-        let e3 = Edge::new(3, &v3, &v4).unwrap();
-        let e4 = Edge::new(4, &v4, &v1).unwrap();
+        let e1 = Edge::new_line(1, &v1, &v2).unwrap();
+        let e2 = Edge::new_line(2, &v2, &v3).unwrap();
+        let e3 = Edge::new_line(3, &v3, &v4).unwrap();
+        let e4 = Edge::new_line(4, &v4, &v1).unwrap();
 
         let wire_outer = Wire::new_unchecked(vec![
             OrientedEdge::new(e1.clone(), true),
@@ -101,10 +101,10 @@ mod tests {
         let v6 = Vertex::new(6, Vector3::new(0.75, 0.5, 0.0));
         let v7 = Vertex::new(7, Vector3::new(0.75, 0.75, 0.0));
         let v8 = Vertex::new(8, Vector3::new(0.5, 0.75, 0.0));
-        let e5 = Edge::new(5, &v5, &v6).unwrap();
-        let e6 = Edge::new(6, &v6, &v7).unwrap();
-        let e7 = Edge::new(7, &v7, &v8).unwrap();
-        let e8 = Edge::new(8, &v8, &v5).unwrap();
+        let e5 = Edge::new_line(5, &v5, &v6).unwrap();
+        let e6 = Edge::new_line(6, &v6, &v7).unwrap();
+        let e7 = Edge::new_line(7, &v7, &v8).unwrap();
+        let e8 = Edge::new_line(8, &v8, &v5).unwrap();
         let wire_inner = Wire::new_unchecked(vec![
             OrientedEdge::new(e5.clone(), true),
             OrientedEdge::new(e6.clone(), true),

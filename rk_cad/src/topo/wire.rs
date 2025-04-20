@@ -112,10 +112,10 @@ mod tests {
         let v3 = Vertex::new(3, Vector3::new(1.0, 1.0, 0.0));
         let v4 = Vertex::new(4, Vector3::new(0.0, 1.0, 0.0));
 
-        let e1 = Edge::new(0, &v1, &v2).unwrap();
-        let e2 = Edge::new(1, &v2, &v3).unwrap();
-        let e3 = Edge::new(2, &v3, &v4).unwrap();
-        let e4 = Edge::new(3, &v4, &v1).unwrap();
+        let e1 = Edge::new_line(0, &v1, &v2).unwrap();
+        let e2 = Edge::new_line(1, &v2, &v3).unwrap();
+        let e3 = Edge::new_line(2, &v3, &v4).unwrap();
+        let e4 = Edge::new_line(3, &v4, &v1).unwrap();
 
         let oe1 = OrientedEdge::new(e1.clone(), true);
         let oe2 = OrientedEdge::new(e2.clone(), true);
@@ -139,9 +139,9 @@ mod tests {
         let v3 = Vertex::new(3, Vector3::new(1.0, 1.0, 0.0));
         let v4 = Vertex::new(4, Vector3::new(0.0, 1.0, 0.0));
 
-        let e1 = Edge::new(0, &v1, &v2).unwrap();
-        let e2 = Edge::new(1, &v2, &v3).unwrap();
-        let e3 = Edge::new(2, &v4, &v1).unwrap(); // v4 -> v1 は連続していない
+        let e1 = Edge::new_line(0, &v1, &v2).unwrap();
+        let e2 = Edge::new_line(1, &v2, &v3).unwrap();
+        let e3 = Edge::new_line(2, &v4, &v1).unwrap(); // v4 -> v1 は連続していない
 
         let oe1 = OrientedEdge::new(e1.clone(), true);
         let oe2 = OrientedEdge::new(e2.clone(), true);
@@ -156,8 +156,8 @@ mod tests {
         let v2 = Vertex::new(2, Vector3::new(1.0, 0.0, 0.0));
         let v3 = Vertex::new(3, Vector3::new(1.0, 1.0, 0.0));
 
-        let e1 = Edge::new(0, &v1, &v2).unwrap();
-        let e2 = Edge::new(1, &v2, &v3).unwrap();
+        let e1 = Edge::new_line(0, &v1, &v2).unwrap();
+        let e2 = Edge::new_line(1, &v2, &v3).unwrap();
 
         let oe1 = OrientedEdge::new(e1.clone(), true);
         let oe2 = OrientedEdge::new(e2.clone(), true);
@@ -174,8 +174,8 @@ mod tests {
         let v2 = Vertex::new(2, Vector3::new(1.0, 0.0, 0.0));
         let v3 = Vertex::new(3, Vector3::new(1.0, 1.0, 0.0));
 
-        let e1 = Edge::new(0, &v1, &v2).unwrap();
-        let e2 = Edge::new(1, &v3, &v2).unwrap(); // v3 -> v2 は連続していない
+        let e1 = Edge::new_line(0, &v1, &v2).unwrap();
+        let e2 = Edge::new_line(1, &v3, &v2).unwrap(); // v3 -> v2 は連続していない
 
         let oe1 = OrientedEdge::new(e1.clone(), true);
         let oe2 = OrientedEdge::new(e2.clone(), true);
@@ -191,10 +191,10 @@ mod tests {
         let v3 = Vertex::new(3, Vector3::new(1.0, 1.0, 0.0));
         let v4 = Vertex::new(4, Vector3::new(0.0, 1.0, 0.0));
 
-        let e1 = Edge::new(0, &v1, &v2).unwrap();
-        let e2 = Edge::new(1, &v2, &v3).unwrap();
-        let e3 = Edge::new(2, &v3, &v4).unwrap();
-        let e4 = Edge::new(3, &v4, &v1).unwrap();
+        let e1 = Edge::new_line(0, &v1, &v2).unwrap();
+        let e2 = Edge::new_line(1, &v2, &v3).unwrap();
+        let e3 = Edge::new_line(2, &v3, &v4).unwrap();
+        let e4 = Edge::new_line(3, &v4, &v1).unwrap();
 
         let oe1 = OrientedEdge::new(e1.clone(), true);
         let oe2 = OrientedEdge::new(e2.clone(), true);
@@ -211,8 +211,8 @@ mod tests {
         let v2 = Vertex::new(2, Vector3::new(1.0, 0.0, 0.0));
         let v3 = Vertex::new(3, Vector3::new(1.0, 1.0, 0.0));
 
-        let e1 = Edge::new(0, &v1, &v2).unwrap();
-        let e2 = Edge::new(1, &v2, &v3).unwrap();
+        let e1 = Edge::new_line(0, &v1, &v2).unwrap();
+        let e2 = Edge::new_line(1, &v2, &v3).unwrap();
 
         let oe1 = OrientedEdge::new(e1.clone(), true);
         let oe2 = OrientedEdge::new(e2.clone(), true);
@@ -228,10 +228,10 @@ mod tests {
         let v3 = Vertex::new(3, Vector3::new(1.0, 1.0, 0.0));
         let v4 = Vertex::new(4, Vector3::new(0.0, 1.0, 0.0));
 
-        let e1 = Edge::new(0, &v1, &v2).unwrap();
-        let e2 = Edge::new(1, &v2, &v3).unwrap();
-        let e3 = Edge::new(2, &v3, &v4).unwrap();
-        let e4 = Edge::new(3, &v4, &v1).unwrap();
+        let e1 = Edge::new_line(0, &v1, &v2).unwrap();
+        let e2 = Edge::new_line(1, &v2, &v3).unwrap();
+        let e3 = Edge::new_line(2, &v3, &v4).unwrap();
+        let e4 = Edge::new_line(3, &v4, &v1).unwrap();
 
         let oe1 = OrientedEdge::new(e1.clone(), true);
         let oe2 = OrientedEdge::new(e2.clone(), true);
@@ -251,8 +251,8 @@ mod tests {
         let v2 = Vertex::new(2, Vector3::new(1.0, 0.0, 0.0));
         let v3 = Vertex::new(3, Vector3::new(1.0, 1.0, 0.0));
 
-        let e1 = Edge::new(0, &v1, &v2).unwrap();
-        let e2 = Edge::new(1, &v2, &v3).unwrap();
+        let e1 = Edge::new_line(0, &v1, &v2).unwrap();
+        let e2 = Edge::new_line(1, &v2, &v3).unwrap();
 
         let oe1 = OrientedEdge::new(e1.clone(), true);
         let oe2 = OrientedEdge::new(e2.clone(), true);
@@ -268,10 +268,10 @@ mod tests {
         let v3 = Vertex::new(3, Vector3::new(1.0, 1.0, 0.0));
         let v4 = Vertex::new(4, Vector3::new(0.0, 1.0, 0.0));
 
-        let e1 = Edge::new(0, &v1, &v2).unwrap();
-        let e2 = Edge::new(1, &v2, &v3).unwrap();
-        let e3 = Edge::new(2, &v3, &v4).unwrap();
-        let e4 = Edge::new(3, &v4, &v1).unwrap();
+        let e1 = Edge::new_line(0, &v1, &v2).unwrap();
+        let e2 = Edge::new_line(1, &v2, &v3).unwrap();
+        let e3 = Edge::new_line(2, &v3, &v4).unwrap();
+        let e4 = Edge::new_line(3, &v4, &v1).unwrap();
 
         let oe1 = OrientedEdge::new(e1.clone(), true);
         let oe2 = OrientedEdge::new(e2.clone(), true);

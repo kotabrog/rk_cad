@@ -1,8 +1,10 @@
 // rk_cad/src/lib.rs
 //! CADライブラリ。ここでは簡単な立方体（Block）の定義と、CADモデル(CadModel)の管理を行います。
 
+pub mod geo;
 pub mod topo;
 
+pub use geo::{AnyCurve, Curve, LineCurve};
 use rk_calc::Vector3;
 pub use topo::{Edge, Face, Loop, OrientedEdge, Vertex, Wire};
 
