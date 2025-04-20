@@ -1,5 +1,5 @@
 #[derive(Debug)]
-pub enum TopoError {
+pub enum TopologyError {
     /// Edge の両端に同じ頂点 ID が指定された
     EdgeEndpointsEqual,
     /// 隣接しないエッジを push / new しようとした

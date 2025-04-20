@@ -1,3 +1,4 @@
+use super::super::geo::AnySurface;
 use crate::topo::Loop;
 
 /// ───────────────────────────────────────────
@@ -11,14 +12,21 @@ pub struct Face {
     outer: Loop,
     /// 内部ループ（穴）：それぞれ必ず閉じていることを前提
     inners: Vec<Loop>,
+    /// この Face が乗っている曲面
+    surface: AnySurface,
 }
 
 impl Face {
     /// 新しい Face を生成
     /// Loop 型を受け取るので、各ループが閉じていることは
     /// 既に保証されています。
-    pub fn new(id: usize, outer: Loop, inners: Vec<Loop>) -> Self {
-        Face { id, outer, inners }
+    pub fn new(id: usize, outer: Loop, inners: Vec<Loop>, surface: AnySurface) -> Self {
+        Face {
+            id,
+            outer,
+            inners,
+            surface,
+        }
     }
 
     /// Face の一意 ID を取得
@@ -36,6 +44,11 @@ impl Face {
         &self.inners
     }
 
+    /// 曲面を借用
+    pub fn surface(&self) -> &AnySurface {
+        &self.surface
+    }
+
     /// 内ループを追加
     pub fn add_inner(&mut self, inner: Loop) {
         self.inners.push(inner)
@@ -46,6 +59,7 @@ impl Face {
 mod tests {
     use super::super::{Edge, OrientedEdge, Vertex, Wire};
     use super::*;
+    use crate::PlaneSurface;
     use rk_calc::Vector3;
 
     #[test]
@@ -68,11 +82,20 @@ mod tests {
         ]);
         let loop_outer = wire.build_loop(0).unwrap();
 
-        let face = Face::new(1, loop_outer.clone(), vec![]);
+        let surface: AnySurface = PlaneSurface::new(
+            Vector3::new(0.0, 0.0, 0.0),
+            Vector3::new(0.0, 0.0, 1.0),
+            Vector3::new(1.0, 0.0, 0.0),
+        )
+        .unwrap()
+        .into();
+
+        let face = Face::new(1, loop_outer.clone(), vec![], surface.clone());
 
         assert_eq!(face.id(), 1);
         assert_eq!(face.outer().id(), loop_outer.id);
         assert!(face.inners().is_empty());
+        assert_eq!(face.surface(), &surface);
     }
 
     #[test]
@@ -95,7 +118,15 @@ mod tests {
         ]);
         let loop_outer = wire_outer.build_loop(0).unwrap();
 
-        let face = Face::new(1, loop_outer.clone(), vec![]);
+        let surface: AnySurface = PlaneSurface::new(
+            Vector3::new(0.0, 0.0, 0.0),
+            Vector3::new(0.0, 0.0, 1.0),
+            Vector3::new(1.0, 0.0, 0.0),
+        )
+        .unwrap()
+        .into();
+
+        let mut face = Face::new(1, loop_outer.clone(), vec![], surface);
 
         let v5 = Vertex::new(5, Vector3::new(0.5, 0.5, 0.0));
         let v6 = Vertex::new(6, Vector3::new(0.75, 0.5, 0.0));
@@ -112,7 +143,6 @@ mod tests {
             OrientedEdge::new(e8.clone(), true),
         ]);
         let loop_inner = wire_inner.build_loop(1).unwrap();
-        let mut face = face.clone();
         face.add_inner(loop_inner.clone());
         assert_eq!(face.inners().len(), 1);
         assert_eq!(face.inners()[0].id, loop_inner.id);

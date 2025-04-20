@@ -1,4 +1,4 @@
-use super::{OrientedEdge, TopoError};
+use super::{OrientedEdge, TopologyError};
 
 /// ───────────────────────────────────────────
 /// 開いたエッジ列：Wire
@@ -17,10 +17,10 @@ impl Wire {
 
     /// 2) 隣接性チェック付きで生成
     ///    window(2) で連続ペアを走査し、共有頂点があるか確認
-    pub fn new(edges: Vec<OrientedEdge>) -> Result<Self, TopoError> {
+    pub fn new(edges: Vec<OrientedEdge>) -> Result<Self, TopologyError> {
         for pair in edges.windows(2) {
             if pair[0].end_id() != pair[1].start_id() {
-                return Err(TopoError::EdgesNotContiguous);
+                return Err(TopologyError::EdgesNotContiguous);
             }
         }
         Ok(Wire { edges })
@@ -32,12 +32,12 @@ impl Wire {
     }
 
     /// 隣接性チェック付き push
-    pub fn checked_push(&mut self, oe: OrientedEdge) -> Result<(), TopoError> {
+    pub fn checked_push(&mut self, oe: OrientedEdge) -> Result<(), TopologyError> {
         if self.edges.is_empty() || self.edges.last().unwrap().end_id() == oe.start_id() {
             self.edges.push(oe);
             Ok(())
         } else {
-            Err(TopoError::EdgesNotContiguous)
+            Err(TopologyError::EdgesNotContiguous)
         }
     }
 
@@ -50,14 +50,14 @@ impl Wire {
     }
 
     /// 閉じていれば Loop を生成、そうでなければ Err
-    pub fn build_loop(self, id: usize) -> Result<Loop, TopoError> {
+    pub fn build_loop(self, id: usize) -> Result<Loop, TopologyError> {
         if self.is_closed() {
             Ok(Loop {
                 id,
                 edges: self.edges,
             })
         } else {
-            Err(TopoError::WireNotClosed)
+            Err(TopologyError::WireNotClosed)
         }
     }
 

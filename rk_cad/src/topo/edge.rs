@@ -1,4 +1,4 @@
-use super::{TopoError, Vertex};
+use super::{TopologyError, Vertex};
 use crate::geo::{AnyCurve, LineCurve};
 use rk_calc::Vector3;
 use std::{
@@ -19,9 +19,9 @@ pub struct EdgeData {
 impl EdgeData {
     /// 新しい EdgeData を生成。
     /// v1.id == v2.id の場合は Err を返す。
-    fn new(id: usize, v1: &Vertex, v2: &Vertex, curve: AnyCurve) -> Result<Self, TopoError> {
+    fn new(id: usize, v1: &Vertex, v2: &Vertex, curve: AnyCurve) -> Result<Self, TopologyError> {
         if v1.id() == v2.id() {
-            return Err(TopoError::EdgeEndpointsEqual);
+            return Err(TopologyError::EdgeEndpointsEqual);
         }
         Ok(EdgeData {
             id,
@@ -38,8 +38,8 @@ pub struct Edge(Rc<RefCell<EdgeData>>);
 
 impl Edge {
     /// 新しい Edge を生成。
-    /// 同一頂点を両端に指定した場合は Err(TopoError::EdgeEndpointsEqual)。
-    pub fn new<C>(id: usize, v1: &Vertex, v2: &Vertex, curve: C) -> Result<Self, TopoError>
+    /// 同一頂点を両端に指定した場合は Err(TopologyError::EdgeEndpointsEqual)。
+    pub fn new<C>(id: usize, v1: &Vertex, v2: &Vertex, curve: C) -> Result<Self, TopologyError>
     where
         C: Into<AnyCurve>,
     {
@@ -48,7 +48,7 @@ impl Edge {
     }
 
     /// 線分 Edge の簡易ビルダー
-    pub fn new_line(id: usize, v1: &Vertex, v2: &Vertex) -> Result<Self, TopoError> {
+    pub fn new_line(id: usize, v1: &Vertex, v2: &Vertex) -> Result<Self, TopologyError> {
         let curve = AnyCurve::Line(LineCurve::new(v1.point(), v2.point()));
         Self::new(id, v1, v2, curve)
     }

@@ -1,8 +1,10 @@
 // rk_calc/src/lib.rs
 // 基本的なベクトルや点を表すためのモジュール
 
+mod error;
 mod vector3;
 
+pub use error::CalcError;
 pub use vector3::Vector3;
 
 // #[derive(Debug, Copy, Clone, PartialEq)]

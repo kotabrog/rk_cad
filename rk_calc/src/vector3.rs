@@ -1,3 +1,4 @@
+use super::CalcError;
 use std::ops::{Add, Mul, Sub};
 
 /// 3D ベクトル／点を表す型（名前を Vector3 に変更）
@@ -33,6 +34,47 @@ impl Vector3 {
     /// 他のベクトルとの距離（点としての距離計算）
     pub fn distance(self, other: &Self) -> f64 {
         (self - *other).magnitude()
+    }
+
+    /// ベクトルの外積
+    pub fn cross(self, other: &Self) -> Vector3 {
+        Vector3::new(
+            self.y * other.z - self.z * other.y,
+            self.z * other.x - self.x * other.z,
+            self.x * other.y - self.y * other.x,
+        )
+    }
+
+    /// このベクトルを `axis` 上に射影したベクトルを返す
+    /// this·axis /(axis·axis) * axis
+    ///
+    /// # Errors
+    /// - `CalcError::AxisTooSmall`: `axis` がほぼ零ベクトルで射影できない場合
+    pub fn project_onto(self, axis: &Vector3) -> Result<Vector3, CalcError> {
+        const EPS: f64 = 1e-12;
+        let denom = axis.dot(axis);
+        if denom.abs() < EPS {
+            Err(CalcError::AxisTooSmall)
+        } else {
+            Ok(*axis * (self.dot(axis) / denom))
+        }
+    }
+
+    /// Gram–Schmidt で `axis` と直交する単位ベクトル成分を返す
+    ///
+    /// # Errors
+    /// - `CalcError::AxisTooSmall`: 入力軸がほぼ零ベクトルで射影できない場合  
+    /// - `CalcError::NoOrthogonalComponent`: 直交成分がほぼ零ベクトルで正規化できない場合
+    pub fn orthonormal_component(self, axis: &Vector3) -> Result<Vector3, CalcError> {
+        let proj = self.project_onto(axis)?;
+        let ortho = self - proj;
+        let mag = ortho.magnitude();
+        const EPS: f64 = 1e-6;
+        if mag < EPS {
+            Err(CalcError::NoOrthogonalComponent)
+        } else {
+            Ok(ortho * (1.0 / mag))
+        }
     }
 }
 
@@ -100,5 +142,97 @@ mod tests {
         let vector2 = Vector3::new(4.0, 5.0, 6.0);
         let distance = vector1.distance(&vector2);
         assert_eq!(distance, 5.196152422706632); // sqrt((4-1)^2 + (5-2)^2 + (6-3)^2) = sqrt(9 + 9 + 9) = sqrt(27)
+    }
+
+    #[test]
+    fn vector3_cross() {
+        let vector1 = Vector3::new(1.0, 2.0, 3.0);
+        let vector2 = Vector3::new(4.0, 5.0, 6.0);
+        let cross_product = vector1.cross(&vector2);
+        assert_eq!(cross_product.x, -3.0);
+        assert_eq!(cross_product.y, 6.0);
+        assert_eq!(cross_product.z, -3.0);
+    }
+
+    #[test]
+    fn vector3_cross_easy() {
+        let vector1 = Vector3::new(1.0, 0.0, 0.0);
+        let vector2 = Vector3::new(0.0, 1.0, 0.0);
+        let cross_product = vector1.cross(&vector2);
+        assert_eq!(cross_product.x, 0.0);
+        assert_eq!(cross_product.y, 0.0);
+        assert_eq!(cross_product.z, 1.0);
+
+        let cross_product = vector2.cross(&vector1);
+        assert_eq!(cross_product.x, 0.0);
+        assert_eq!(cross_product.y, 0.0);
+        assert_eq!(cross_product.z, -1.0);
+    }
+
+    #[test]
+    fn vector3_project_onto() {
+        let vector = Vector3::new(1.0, 2.0, 3.0);
+        let axis = Vector3::new(0.0, 1.0, 0.0);
+        let projected = vector.project_onto(&axis).unwrap();
+        assert_eq!(projected.x, 0.0);
+        assert_eq!(projected.y, 2.0);
+        assert_eq!(projected.z, 0.0);
+    }
+
+    #[test]
+    fn vector3_project_onto_zero_axis() {
+        let vector = Vector3::new(1.0, 2.0, 3.0);
+        let axis = Vector3::new(0.0, 0.0, 0.0);
+        let result = vector.project_onto(&axis);
+        assert!(result.is_err());
+        assert_eq!(result.unwrap_err(), CalcError::AxisTooSmall);
+    }
+
+    #[test]
+    fn vector3_orthonormal_component() {
+        let vector = Vector3::new(1.0, 2.0, 3.0);
+        let axis = Vector3::new(0.0, 1.0, 0.0);
+        let orthogonal = vector.orthonormal_component(&axis).unwrap();
+        assert!((orthogonal.magnitude() - 1.0).abs() < 1e-6); // 大きさが 1 であることを確認
+        assert!(orthogonal.dot(&axis).abs() < 1e-6); // 直交していることを確認
+    }
+
+    #[test]
+    fn vector3_orthonormal_component_zero_axis() {
+        let vector = Vector3::new(1.0, 2.0, 3.0);
+        let axis = Vector3::new(0.0, 0.0, 0.0);
+        let result = vector.orthonormal_component(&axis);
+        assert!(result.is_err());
+        assert_eq!(result.unwrap_err(), CalcError::AxisTooSmall);
+    }
+
+    #[test]
+    fn vector3_add() {
+        let vector1 = Vector3::new(1.0, 2.0, 3.0);
+        let vector2 = Vector3::new(4.0, 5.0, 6.0);
+        let result = vector1 + vector2;
+        assert_eq!(result.x, 5.0);
+        assert_eq!(result.y, 7.0);
+        assert_eq!(result.z, 9.0);
+    }
+
+    #[test]
+    fn vector3_sub() {
+        let vector1 = Vector3::new(4.0, 5.0, 6.0);
+        let vector2 = Vector3::new(1.0, 2.0, 3.0);
+        let result = vector1 - vector2;
+        assert_eq!(result.x, 3.0);
+        assert_eq!(result.y, 3.0);
+        assert_eq!(result.z, 3.0);
+    }
+
+    #[test]
+    fn vector3_mul() {
+        let vector = Vector3::new(1.0, 2.0, 3.0);
+        let scalar = 2.0;
+        let result = vector * scalar;
+        assert_eq!(result.x, 2.0);
+        assert_eq!(result.y, 4.0);
+        assert_eq!(result.z, 6.0);
     }
 }
