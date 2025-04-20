@@ -6,4 +6,6 @@ pub enum TopologyError {
     EdgesNotContiguous,
     /// Wire が閉じていなかった
     WireNotClosed,
+    /// vertex が面上にない
+    VertexNotOnSurface(usize),
 }

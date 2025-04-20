@@ -9,6 +9,8 @@ pub trait Surface: std::fmt::Debug + Clone + PartialEq {
     fn position(&self, u: f64, v: f64) -> Vector3;
     /// パラメータ (u, v) に対応する法線ベクトルを返す
     fn normal(&self, u: f64, v: f64) -> Vector3;
+    /// この Surface 上に点 p があるか許容誤差 eps で返す
+    fn contains_point(&self, p: &Vector3, eps: f64) -> bool;
 }
 
 /// ───────────────────────────────────────────
@@ -62,6 +64,13 @@ impl Surface for PlaneSurface {
         // 常に法線ベクトルを返す
         self.normal
     }
+
+    fn contains_point(&self, p: &Vector3, eps: f64) -> bool {
+        // p が平面上にあるかどうかを判定
+        // p が平面上にあるなら、p - origin と法線の内積は 0 になる
+        let d = (*p - self.origin).dot(&self.normal);
+        d.abs() <= eps
+    }
 }
 
 /// ───────────────────────────────────────────
@@ -88,10 +97,19 @@ impl Surface for AnySurface {
             // AnySurface::Nurbs(n)    => n.position(u, v),
         }
     }
+
     fn normal(&self, u: f64, v: f64) -> Vector3 {
         match self {
             AnySurface::Plane(p) => p.normal(u, v),
             // …
+        }
+    }
+
+    fn contains_point(&self, p: &Vector3, eps: f64) -> bool {
+        match self {
+            AnySurface::Plane(plane) => plane.contains_point(p, eps),
+            // AnySurface::Cylinder(c) => c.contains_point(p, eps),
+            // AnySurface::Nurbs(n)    => n.contains_point(p, eps),
         }
     }
 }
@@ -129,5 +147,19 @@ mod tests {
         let u_axis = Vector3::new(0.0, 0.0, 2.0); // 法線と平行
 
         PlaneSurface::new(origin, normal, u_axis).unwrap();
+    }
+
+    #[test]
+    fn plane_surface_contains_point() {
+        let origin = Vector3::new(0.0, 0.0, 0.0);
+        let normal = Vector3::new(0.0, 0.0, 1.0);
+        let u_axis = Vector3::new(1.0, 0.0, 0.0);
+        let plane = PlaneSurface::new(origin, normal, u_axis).unwrap();
+
+        let point_on_plane = Vector3::new(1.0, 2.0, 0.0);
+        let point_off_plane = Vector3::new(1.0, 2.0, 1.0);
+
+        assert!(plane.contains_point(&point_on_plane, 1e-6));
+        assert!(!plane.contains_point(&point_off_plane, 1e-6));
     }
 }
