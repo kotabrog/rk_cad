@@ -87,6 +87,16 @@ impl Loop {
     pub fn edges(&self) -> &[OrientedEdge] {
         &self.edges
     }
+
+    /// この Loop を開いた Wire に戻す（消費せずに clone したいとき）
+    pub fn to_wire(&self) -> Wire {
+        Wire::new_unchecked(self.edges.clone())
+    }
+
+    /// この Loop を開いた Wire に戻す（消費して所有権を移したいとき）
+    pub fn into_wire(self) -> Wire {
+        Wire::new_unchecked(self.edges)
+    }
 }
 
 #[cfg(test)]
@@ -249,5 +259,37 @@ mod tests {
 
         let wire = Wire::new(vec![oe1, oe2]).unwrap();
         wire.build_loop(42).unwrap();
+    }
+
+    #[test]
+    fn to_wire() {
+        let v1 = Vertex::new(1, Point3::new(0.0, 0.0, 0.0));
+        let v2 = Vertex::new(2, Point3::new(1.0, 0.0, 0.0));
+        let v3 = Vertex::new(3, Point3::new(1.0, 1.0, 0.0));
+        let v4 = Vertex::new(4, Point3::new(0.0, 1.0, 0.0));
+
+        let e1 = Edge::new(0, &v1, &v2).unwrap();
+        let e2 = Edge::new(1, &v2, &v3).unwrap();
+        let e3 = Edge::new(2, &v3, &v4).unwrap();
+        let e4 = Edge::new(3, &v4, &v1).unwrap();
+
+        let oe1 = OrientedEdge::new(e1.clone(), true);
+        let oe2 = OrientedEdge::new(e2.clone(), true);
+        let oe3 = OrientedEdge::new(e3.clone(), true);
+        let oe4 = OrientedEdge::new(e4.clone(), true);
+
+        let loop_ = Loop {
+            id: 42,
+            edges: vec![oe1.clone(), oe2.clone(), oe3.clone(), oe4.clone()],
+        };
+        let wire = loop_.to_wire();
+        assert_eq!(wire.edges().len(), 4);
+
+        let into_wire = loop_.into_wire();
+        assert_eq!(into_wire.edges().len(), 4);
+        assert_eq!(into_wire.edges()[0], wire.edges()[0]);
+        assert_eq!(into_wire.edges()[1], wire.edges()[1]);
+        assert_eq!(into_wire.edges()[2], wire.edges()[2]);
+        assert_eq!(into_wire.edges()[3], wire.edges()[3]);
     }
 }

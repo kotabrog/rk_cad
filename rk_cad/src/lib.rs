@@ -4,7 +4,7 @@
 pub mod topo;
 
 use rk_calc::Vector3;
-pub use topo::{Edge, Loop, OrientedEdge, Vertex, Wire};
+pub use topo::{Edge, Face, Loop, OrientedEdge, Vertex, Wire};
 
 /// CADの形状に共通する振る舞いを定義するトレイト。
 pub trait Shape {

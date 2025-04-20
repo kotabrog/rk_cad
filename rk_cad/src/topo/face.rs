@@ -1,0 +1,121 @@
+use crate::topo::Loop;
+
+/// ───────────────────────────────────────────
+/// Face（面）
+/// ───────────────────────────────────────────
+
+#[derive(Debug, Clone)]
+pub struct Face {
+    id: usize,
+    /// 外部ループ：必ず閉じていることを前提
+    outer: Loop,
+    /// 内部ループ（穴）：それぞれ必ず閉じていることを前提
+    inners: Vec<Loop>,
+}
+
+impl Face {
+    /// 新しい Face を生成
+    /// Loop 型を受け取るので、各ループが閉じていることは
+    /// 既に保証されています。
+    pub fn new(id: usize, outer: Loop, inners: Vec<Loop>) -> Self {
+        Face { id, outer, inners }
+    }
+
+    /// Face の一意 ID を取得
+    pub fn id(&self) -> usize {
+        self.id
+    }
+
+    /// 外部ループを借用
+    pub fn outer(&self) -> &Loop {
+        &self.outer
+    }
+
+    /// 内部ループを借用
+    pub fn inners(&self) -> &[Loop] {
+        &self.inners
+    }
+
+    /// 内ループを追加
+    pub fn add_inner(&mut self, inner: Loop) {
+        self.inners.push(inner)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::super::{Edge, OrientedEdge, Vertex, Wire};
+    use super::*;
+    use rk_calc::Point3;
+
+    #[test]
+    fn face_new() {
+        let v1 = Vertex::new(1, Point3::new(0.0, 0.0, 0.0));
+        let v2 = Vertex::new(2, Point3::new(1.0, 0.0, 0.0));
+        let v3 = Vertex::new(3, Point3::new(1.0, 1.0, 0.0));
+        let v4 = Vertex::new(4, Point3::new(0.0, 1.0, 0.0));
+
+        let e1 = Edge::new(1, &v1, &v2).unwrap();
+        let e2 = Edge::new(2, &v2, &v3).unwrap();
+        let e3 = Edge::new(3, &v3, &v4).unwrap();
+        let e4 = Edge::new(4, &v4, &v1).unwrap();
+
+        let wire = Wire::new_unchecked(vec![
+            OrientedEdge::new(e1.clone(), true),
+            OrientedEdge::new(e2.clone(), true),
+            OrientedEdge::new(e3.clone(), true),
+            OrientedEdge::new(e4.clone(), true),
+        ]);
+        let loop_outer = wire.build_loop(0).unwrap();
+
+        let face = Face::new(1, loop_outer.clone(), vec![]);
+
+        assert_eq!(face.id(), 1);
+        assert_eq!(face.outer().id(), loop_outer.id);
+        assert!(face.inners().is_empty());
+    }
+
+    #[test]
+    fn face_add_inner() {
+        let v1 = Vertex::new(1, Point3::new(0.0, 0.0, 0.0));
+        let v2 = Vertex::new(2, Point3::new(1.0, 0.0, 0.0));
+        let v3 = Vertex::new(3, Point3::new(1.0, 1.0, 0.0));
+        let v4 = Vertex::new(4, Point3::new(0.0, 1.0, 0.0));
+
+        let e1 = Edge::new(1, &v1, &v2).unwrap();
+        let e2 = Edge::new(2, &v2, &v3).unwrap();
+        let e3 = Edge::new(3, &v3, &v4).unwrap();
+        let e4 = Edge::new(4, &v4, &v1).unwrap();
+
+        let wire_outer = Wire::new_unchecked(vec![
+            OrientedEdge::new(e1.clone(), true),
+            OrientedEdge::new(e2.clone(), true),
+            OrientedEdge::new(e3.clone(), true),
+            OrientedEdge::new(e4.clone(), true),
+        ]);
+        let loop_outer = wire_outer.build_loop(0).unwrap();
+
+        let face = Face::new(1, loop_outer.clone(), vec![]);
+
+        let v5 = Vertex::new(5, Point3::new(0.5, 0.5, 0.0));
+        let v6 = Vertex::new(6, Point3::new(0.75, 0.5, 0.0));
+        let v7 = Vertex::new(7, Point3::new(0.75, 0.75, 0.0));
+        let v8 = Vertex::new(8, Point3::new(0.5, 0.75, 0.0));
+        let e5 = Edge::new(5, &v5, &v6).unwrap();
+        let e6 = Edge::new(6, &v6, &v7).unwrap();
+        let e7 = Edge::new(7, &v7, &v8).unwrap();
+        let e8 = Edge::new(8, &v8, &v5).unwrap();
+        let wire_inner = Wire::new_unchecked(vec![
+            OrientedEdge::new(e5.clone(), true),
+            OrientedEdge::new(e6.clone(), true),
+            OrientedEdge::new(e7.clone(), true),
+            OrientedEdge::new(e8.clone(), true),
+        ]);
+        let loop_inner = wire_inner.build_loop(1).unwrap();
+        let mut face = face.clone();
+        face.add_inner(loop_inner.clone());
+        assert_eq!(face.inners().len(), 1);
+        assert_eq!(face.inners()[0].id, loop_inner.id);
+        assert_eq!(face.inners()[0].edges().len(), 4);
+    }
+}
