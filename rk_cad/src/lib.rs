@@ -6,7 +6,7 @@ pub mod topo;
 
 pub use geo::{AnyCurve, AnySurface, Curve, GeometryError, LineCurve, PlaneSurface, Surface};
 use rk_calc::Vector3;
-pub use topo::{Edge, Face, Loop, OrientedEdge, TopologyError, Vertex, Wire};
+pub use topo::{Edge, Face, Loop, OrientedEdge, Shell, TopologyError, Vertex, Wire};
 
 /// CADの形状に共通する振る舞いを定義するトレイト。
 pub trait Shape {

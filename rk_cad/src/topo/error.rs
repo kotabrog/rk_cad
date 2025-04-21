@@ -8,4 +8,6 @@ pub enum TopologyError {
     WireNotClosed,
     /// vertex が面上にない
     VertexNotOnSurface(usize),
+    /// Shell のエッジがちょうど 2 回現れなかった (edge_id, count)
+    ShellNotManifoldEdge(usize, usize),
 }
