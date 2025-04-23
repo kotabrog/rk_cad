@@ -12,4 +12,6 @@ pub enum TopologyError {
     ShellNotManifoldEdge(usize, usize),
     /// 内殻の ID が外殻と同じだった
     InnerShellSameAsOuter(usize),
+    /// ID が重複していた
+    DuplicateId(&'static str, usize),
 }
