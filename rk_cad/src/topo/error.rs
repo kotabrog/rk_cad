@@ -10,4 +10,6 @@ pub enum TopologyError {
     VertexNotOnSurface(usize),
     /// Shell のエッジがちょうど 2 回現れなかった (edge_id, count)
     ShellNotManifoldEdge(usize, usize),
+    /// 内殻の ID が外殻と同じだった
+    InnerShellSameAsOuter(usize),
 }
