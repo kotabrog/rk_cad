@@ -1,12 +1,14 @@
 use super::super::geo::{AnySurface, Surface};
 use super::{Loop, TopologyError};
+use std::cell::{Ref, RefCell, RefMut};
+use std::rc::Rc;
 
 /// ───────────────────────────────────────────
 /// Face（面）
 /// ───────────────────────────────────────────
 
 #[derive(Debug, Clone)]
-pub struct Face {
+pub struct FaceData {
     id: usize,
     /// 外部ループ：必ず閉じていることを前提
     outer: Loop,
@@ -15,6 +17,10 @@ pub struct Face {
     /// この Face が乗っている曲面
     surface: AnySurface,
 }
+
+/// Rc<RefCell<FaceData>> をラップした型
+#[derive(Debug, Clone)]
+pub struct Face(Rc<RefCell<FaceData>>);
 
 impl Face {
     ///  単一の Loop が与えられた Surface 上にあるか検証
@@ -52,40 +58,49 @@ impl Face {
             Self::validate_loop_on_surface(inner, &surface, EPS)?;
         }
 
-        Ok(Face {
+        Ok(Face(Rc::new(RefCell::new(FaceData {
             id,
             outer,
             inners,
             surface,
-        })
+        }))))
     }
 
     /// Face の一意 ID を取得
     pub fn id(&self) -> usize {
-        self.id
+        self.0.borrow().id
     }
 
     /// 外部ループを借用
-    pub fn outer(&self) -> &Loop {
-        &self.outer
+    pub fn outer(&self) -> Ref<'_, Loop> {
+        Ref::map(self.0.borrow(), |d| &d.outer)
     }
 
     /// 内部ループを借用
-    pub fn inners(&self) -> &[Loop] {
-        &self.inners
+    pub fn inners(&self) -> Ref<'_, Vec<Loop>> {
+        Ref::map(self.0.borrow(), |d| &d.inners)
     }
 
     /// 曲面を借用
-    pub fn surface(&self) -> &AnySurface {
-        &self.surface
+    pub fn surface(&self) -> Ref<'_, AnySurface> {
+        Ref::map(self.0.borrow(), |d| &d.surface)
     }
 
     /// 内ループを追加
-    pub fn add_inner(&mut self, inner: Loop) -> Result<(), TopologyError> {
+    pub fn add_inner(&self, inner: Loop) -> Result<(), TopologyError> {
         const EPS: f64 = 1e-6;
-        Self::validate_loop_on_surface(&inner, &self.surface, EPS)?;
-        self.inners.push(inner);
+        {
+            // surface を借りる
+            let surf = self.0.borrow();
+            Self::validate_loop_on_surface(&inner, &surf.surface, EPS)?;
+        }
+        // 可変借用して追加
+        self.0.borrow_mut().inners.push(inner);
         Ok(())
+    }
+
+    pub fn borrow_mut(&self) -> RefMut<'_, FaceData> {
+        self.0.borrow_mut()
     }
 }
 
@@ -129,7 +144,7 @@ mod tests {
         assert_eq!(face.id(), 1);
         assert_eq!(face.outer().id(), loop_outer.id);
         assert!(face.inners().is_empty());
-        assert_eq!(face.surface(), &surface);
+        assert_eq!(&*face.surface(), &surface);
     }
 
     #[test]
@@ -208,7 +223,7 @@ mod tests {
         .unwrap()
         .into();
 
-        let mut face = Face::new(1, loop_outer.clone(), vec![], surface).unwrap();
+        let face = Face::new(1, loop_outer.clone(), vec![], surface).unwrap();
 
         let v5 = Vertex::new(5, Vector3::new(0.5, 0.5, 0.0));
         let v6 = Vertex::new(6, Vector3::new(0.75, 0.5, 0.0));
@@ -260,7 +275,7 @@ mod tests {
         .unwrap()
         .into();
 
-        let mut face = Face::new(1, loop_outer.clone(), vec![], surface).unwrap();
+        let face = Face::new(1, loop_outer.clone(), vec![], surface).unwrap();
 
         // Loop 上の頂点が Surface 上にない
         let v5 = Vertex::new(5, Vector3::new(10.0, 10.0, 10.0));

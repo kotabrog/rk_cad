@@ -33,7 +33,7 @@ impl Shell {
                 *count.entry(oe.edge.id()).or_default() += 1;
             }
             // 内部ループ（孔）
-            for inner in face.inners() {
+            for inner in face.inners().iter() {
                 for oe in inner.edges() {
                     *count.entry(oe.edge.id()).or_default() += 1;
                 }
