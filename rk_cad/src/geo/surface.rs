@@ -52,6 +52,41 @@ impl PlaneSurface {
             v_axis: v,
         })
     }
+
+    /// origin と normal だけで平面を生成  
+    /// 内部で安定した u_axis・v_axis を自動設定する
+    pub fn from_point_normal(origin: Vector3, normal: Vector3) -> Self {
+        let n = normal.normalize();
+
+        // 1) n とできるだけ平行でないワールド軸を選ぶ
+        let world_axes = [
+            Vector3::new(1.0, 0.0, 0.0),
+            Vector3::new(0.0, 1.0, 0.0),
+            Vector3::new(0.0, 0.0, 1.0),
+        ];
+        let mut u = world_axes
+            .iter()
+            .min_by(|a, b| {
+                a.dot(&n).abs()
+                    .partial_cmp(&b.dot(&n).abs())
+                    .unwrap()
+            })
+            .copied()
+            .unwrap();
+
+        // 2) n に直交化して正規化
+        u = u.orthonormal_component(&n).unwrap();
+
+        // 3) v = n × u
+        let v = n.cross(&u).normalize();
+
+        PlaneSurface {
+            origin,
+            normal: n,
+            u_axis: u,
+            v_axis: v,
+        }
+    }
 }
 
 impl Surface for PlaneSurface {
@@ -147,6 +182,18 @@ mod tests {
         let u_axis = Vector3::new(0.0, 0.0, 2.0); // 法線と平行
 
         PlaneSurface::new(origin, normal, u_axis).unwrap();
+    }
+
+    #[test]
+    fn plane_surface_from_point_normal() {
+        let origin = Vector3::new(0.0, 0.0, 0.0);
+        let normal = Vector3::new(0.0, 0.0, 1.0);
+        let plane = PlaneSurface::from_point_normal(origin, normal);
+
+        assert_eq!(plane.origin, origin);
+        assert_eq!(plane.normal, normal.normalize());
+        assert_eq!(plane.u_axis, Vector3::new(1.0, 0.0, 0.0));
+        assert_eq!(plane.v_axis, Vector3::new(0.0, 1.0, 0.0));
     }
 
     #[test]

@@ -1,4 +1,4 @@
-use rk_step_parser::{parse_step_file, build_graph};
+use rk_step_parser::{parse_step_file, build_graph, Attr};
 
 const STEP: &str = include_str!("fixtures/cube.step");
 
@@ -7,14 +7,18 @@ fn graph_contains_cartesian_point() {
     let sf = parse_step_file(STEP).unwrap();
     let g  = build_graph(&sf.entities);
 
-    // FreeCAD 立方体だと #12 が CARTESIAN_POINT
-    let node = g.get(&12).expect("node #12 not found");
+    // どれか 1 つ CARTESIAN_POINT を拾う
+    let node = g.values()
+        .find(|n| n.kind == "CARTESIAN_POINT")
+        .expect("no CARTESIAN_POINT found");
 
-    assert_eq!(node.kind, "CARTESIAN_POINT");
-    // 先頭引数は座標のリスト
-    if let rk_step_parser::Attr::List(xyz) = &node.attrs[1] {
+    // attrs は RefCell<Vec<Attr>>
+    let attrs = node.attrs.borrow();
+
+    // 第 2 引数が座標リストか確認
+    if let Attr::List(xyz) = &attrs[1] {
         assert_eq!(xyz.len(), 3);
     } else {
-        panic!("unexpected attr format");
+        panic!("CARTESIAN_POINT arg[1] is not a List");
     }
 }
