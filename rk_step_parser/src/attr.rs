@@ -5,7 +5,7 @@ use std::rc::Weak;
 
 #[derive(Debug)]
 pub struct Node {
-    pub id:   usize,
+    pub id: usize,
     pub kind: String,
     pub attrs: RefCell<Vec<Attr>>,
 }
@@ -24,15 +24,21 @@ pub enum Attr {
 impl Attr {
     /// `input` は "a,b,(c,d),#12" のようなカッコ込み引数列
     pub fn parse_list(input: &str) -> Vec<Attr> {
-        let mut out   = Vec::<Attr>::new();
-        let mut buf   = String::new();
+        let mut out = Vec::<Attr>::new();
+        let mut buf = String::new();
         let mut depth = 0;
         let mut in_quote = false;
 
         for ch in input.chars() {
             match ch {
-                '\'' => { in_quote = !in_quote; buf.push(ch); } // クォート保持
-                '(' if !in_quote => { depth += 1; buf.push(ch); }
+                '\'' => {
+                    in_quote = !in_quote;
+                    buf.push(ch);
+                } // クォート保持
+                '(' if !in_quote => {
+                    depth += 1;
+                    buf.push(ch);
+                }
                 ')' if !in_quote => {
                     buf.push(ch);
                     depth -= 1;
@@ -55,8 +61,8 @@ impl Attr {
     /// トークン 1 個 → Attr
     fn from_token(tok: &str) -> Attr {
         let t = tok.trim();
-        if t.starts_with('#') {
-            let id = t[1..].parse().unwrap_or(0);
+        if let Some(stripped) = t.strip_prefix('#') {
+            let id = stripped.parse().unwrap_or(0);
             Attr::RefId(id)
         } else if t.starts_with('(') && t.ends_with(')') {
             Attr::List(Attr::parse_list(&t[1..t.len() - 1]))

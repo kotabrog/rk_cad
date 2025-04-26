@@ -1,14 +1,15 @@
-use rk_step_parser::{parse_step_file, build_graph, Attr};
+use rk_step_parser::{build_graph, parse_step_file, Attr};
 
 const STEP: &str = include_str!("fixtures/cube.step");
 
 #[test]
 fn graph_contains_cartesian_point() {
     let sf = parse_step_file(STEP).unwrap();
-    let g  = build_graph(&sf.entities);
+    let g = build_graph(&sf.entities);
 
     // どれか 1 つ CARTESIAN_POINT を拾う
-    let node = g.values()
+    let node = g
+        .values()
         .find(|n| n.kind == "CARTESIAN_POINT")
         .expect("no CARTESIAN_POINT found");
 

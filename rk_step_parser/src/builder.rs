@@ -19,8 +19,8 @@ pub fn build_graph(raw: &[RawEntity]) -> Graph {
     let mut g = Graph::with_capacity(raw.len());
     for ent in raw {
         let attrs = Attr::parse_list(&ent.params);
-        let node  = Rc::new(Node {
-            id:   ent.id,
+        let node = Rc::new(Node {
+            id: ent.id,
             kind: ent.keyword.clone(),
             attrs: std::cell::RefCell::new(attrs),
         });
@@ -39,7 +39,7 @@ pub fn resolve_refs(graph: &Graph) {
     }
 }
 
-fn resolve_list(list: &mut Vec<Attr>, graph: &Graph) {
+fn resolve_list(list: &mut [Attr], graph: &Graph) {
     for attr in list.iter_mut() {
         match attr {
             Attr::List(inner) => resolve_list(inner, graph),

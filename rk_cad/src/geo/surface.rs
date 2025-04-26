@@ -66,11 +66,7 @@ impl PlaneSurface {
         ];
         let mut u = world_axes
             .iter()
-            .min_by(|a, b| {
-                a.dot(&n).abs()
-                    .partial_cmp(&b.dot(&n).abs())
-                    .unwrap()
-            })
+            .min_by(|a, b| a.dot(&n).abs().partial_cmp(&b.dot(&n).abs()).unwrap())
             .copied()
             .unwrap();
 

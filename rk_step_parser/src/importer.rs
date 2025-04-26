@@ -2,12 +2,12 @@
 
 use std::collections::HashMap;
 
-use rk_calc::Vector3;
 use rk_cad::{
-    geo::{LineCurve, PlaneSurface, AnySurface},
-    topo::{Vertex, Edge, Loop, Face, Shell, Solid, Model, Wire},
+    geo::{AnySurface, LineCurve, PlaneSurface},
+    topo::{Edge, Face, Loop, Model, Shell, Solid, Vertex, Wire},
     TopologyError,
 };
+use rk_calc::Vector3;
 
 use crate::attr::Attr;
 use crate::builder::Graph;
@@ -58,7 +58,7 @@ pub fn import_cube(graph: &Graph) -> Result<Model, TopologyError> {
 
         if let (Some(va), Some(vb)) = (a, b) {
             let curve = LineCurve::new(va.point(), vb.point());
-            edges.insert(n.id, Edge::new(n.id, &va, &vb, curve)?);
+            edges.insert(n.id, Edge::new(n.id, va, vb, curve)?);
         }
     }
 
@@ -70,14 +70,11 @@ pub fn import_cube(graph: &Graph) -> Result<Model, TopologyError> {
             if let Some(ax_node) = pl_w.upgrade() {
                 // AXIS2_PLACEMENT_3D('', loc, axis, ref_dir)
                 let loc_pt = ref_point(&ax_node.attrs.borrow()[1], &cart);
-                let axis   = ref_dir (&ax_node.attrs.borrow()[2], &dirs)
+                let axis = ref_dir(&ax_node.attrs.borrow()[2], &dirs)
                     .unwrap_or(Vector3::new(0.0, 0.0, 1.0));
 
                 if let Some(pt) = loc_pt {
-                    planes.insert(
-                        plane_node.id,
-                        PlaneSurface::from_point_normal(pt, axis),
-                    );
+                    planes.insert(plane_node.id, PlaneSurface::from_point_normal(pt, axis));
                 }
             }
         }
@@ -91,18 +88,18 @@ pub fn import_cube(graph: &Graph) -> Result<Model, TopologyError> {
         let attrs_borrowed = loop_node.attrs.borrow();
         let oe_attrs = match attrs_borrowed.get(1) {
             Some(Attr::List(list)) => list,
-            _ => continue,            // 構文不正なら飛ばす
+            _ => continue, // 構文不正なら飛ばす
         };
-    
+
         let mut oes = Vec::new();
-    
+
         for a in oe_attrs {
             if let Attr::Ref(oe_w) = a {
                 if let Some(oe_node) = oe_w.upgrade() {
                     // ORIENTED_EDGE('',*,*,edge_ref,sense)
                     let forward = match oe_node.attrs.borrow().get(4) {
                         Some(Attr::Scalar(s)) => s.trim() == ".T.",
-                        _ => true,             // デフォルト正方向
+                        _ => true, // デフォルト正方向
                     };
                     if let Some(Attr::Ref(edge_w)) = oe_node.attrs.borrow().get(3) {
                         if let Some(e_node) = edge_w.upgrade() {
@@ -114,11 +111,11 @@ pub fn import_cube(graph: &Graph) -> Result<Model, TopologyError> {
                 }
             }
         }
-    
+
         // 隣接チェック → ループ生成
         if !oes.is_empty() {
-            let wire = Wire::new(oes)?;               // 隣接性
-            let lp   = wire.build_loop(loop_node.id)?; // 閉塞性
+            let wire = Wire::new(oes)?; // 隣接性
+            let lp = wire.build_loop(loop_node.id)?; // 閉塞性
             loops.insert(loop_node.id, lp);
         }
     }
@@ -133,7 +130,7 @@ pub fn import_cube(graph: &Graph) -> Result<Model, TopologyError> {
             _ => continue,
         };
 
-        if let Some(Attr::Ref(fb_w)) = face_bounds.get(0) {
+        if let Some(Attr::Ref(fb_w)) = face_bounds.first() {
             if let Some(fb_node) = fb_w.upgrade() {
                 // FACE_BOUND('', loop_ref, .T./.F.)
                 if let Some(Attr::Ref(loop_w)) = fb_node.attrs.borrow().get(1) {
@@ -195,10 +192,18 @@ pub fn import_cube(graph: &Graph) -> Result<Model, TopologyError> {
 
     /* 8. Modelへ詰める */
     let mut model = Model::new();
-    for (_, v) in verts  { model.add_vertex(v)?; }
-    for (_, e) in edges  { model.add_edge(e)?;   }
-    for (_, f) in faces  { model.add_face(f)?;   }
-    for (_, so) in solids { model.add_solid(so)?; }
+    for (_, v) in verts {
+        model.add_vertex(v)?;
+    }
+    for (_, e) in edges {
+        model.add_edge(e)?;
+    }
+    for (_, f) in faces {
+        model.add_face(f)?;
+    }
+    for (_, so) in solids {
+        model.add_solid(so)?;
+    }
     Ok(model)
 }
 
@@ -232,10 +237,7 @@ fn ref_dir(attr: &Attr, dirs: &HashMap<usize, Vector3>) -> Option<Vector3> {
     }
 }
 
-fn ref_vertex<'a>(
-    attr: &Attr,
-    verts: &'a HashMap<usize, Vertex>,
-) -> Option<&'a Vertex> {
+fn ref_vertex<'a>(attr: &Attr, verts: &'a HashMap<usize, Vertex>) -> Option<&'a Vertex> {
     if let Attr::Ref(w) = attr {
         w.upgrade().and_then(|n| verts.get(&n.id))
     } else {
