@@ -8,4 +8,5 @@ description.workspace = true
 [dependencies]
 rk_calc = { path = "../rk_calc" }
 rk_cad = { path = "../rk_cad" }
+thiserror.workspace = true
 regex = "1.11"

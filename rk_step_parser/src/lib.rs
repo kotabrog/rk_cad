@@ -1,5 +1,9 @@
-mod parse_step;
-mod write_step;
+mod error;
+mod raw_entity;
+mod step_file;
+mod writer;
 
-pub use parse_step::parse_step;
-pub use write_step::write_step;
+pub use error::ParseError;
+pub use raw_entity::RawEntity;
+pub use step_file::{parse_step_file, StepFile};
+pub use writer::write_step_file;
