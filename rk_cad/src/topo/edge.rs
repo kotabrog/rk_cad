@@ -139,6 +139,22 @@ impl OrientedEdge {
             self.edge.v1().id()
         }
     }
+
+    pub fn start(&self) -> Vertex {
+        if self.forward {
+            self.edge.v1()
+        } else {
+            self.edge.v2()
+        }
+    }
+
+    pub fn end(&self) -> Vertex {
+        if self.forward {
+            self.edge.v2()
+        } else {
+            self.edge.v1()
+        }
+    }
 }
 
 impl fmt::Debug for OrientedEdge {

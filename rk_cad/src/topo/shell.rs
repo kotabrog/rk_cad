@@ -8,7 +8,7 @@ use std::collections::HashMap;
 #[derive(Debug, Clone)]
 pub struct Shell {
     /// シェル ID
-    pub id: usize,
+    id: usize,
     /// このシェルを構成する Face の一覧
     faces: Vec<Face>,
 }
@@ -48,6 +48,11 @@ impl Shell {
         }
 
         Ok(Shell { id, faces })
+    }
+
+    /// 一意 ID を取得
+    pub fn id(&self) -> usize {
+        self.id
     }
 
     /// シェルを構成する Face を借用

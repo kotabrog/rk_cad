@@ -23,8 +23,8 @@ impl Solid {
     ///   ※ 本格的な “包含関係” 判定は今後の拡張ポイント
     pub fn new(id: usize, outer: Shell, inners: Vec<Shell>) -> Result<Self, TopologyError> {
         for sh in &inners {
-            if sh.id == outer.id {
-                return Err(TopologyError::InnerShellSameAsOuter(sh.id));
+            if sh.id() == outer.id() {
+                return Err(TopologyError::InnerShellSameAsOuter(sh.id()));
             }
         }
         Ok(Solid { id, outer, inners })

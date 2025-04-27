@@ -5,8 +5,19 @@ edition.workspace = true
 license.workspace = true
 description.workspace = true
 
+[features]
+cli = ["clap"]
+
 [dependencies]
 rk_calc = { path = "../rk_calc" }
 rk_cad = { path = "../rk_cad" }
 thiserror.workspace = true
+anyhow.workspace = true
 regex = "1.11"
+clap = { version = "4.5", features = ["derive"], optional = true }
+chrono = "0.4"
+
+[[bin]]
+name = "rkstep"
+path = "src/bin/rkstep.rs"
+required-features = ["cli"]

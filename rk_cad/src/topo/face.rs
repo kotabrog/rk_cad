@@ -99,6 +99,10 @@ impl Face {
         Ok(())
     }
 
+    pub fn borrow(&self) -> Ref<'_, FaceData> {
+        self.0.borrow()
+    }
+
     pub fn borrow_mut(&self) -> RefMut<'_, FaceData> {
         self.0.borrow_mut()
     }

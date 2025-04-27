@@ -7,3 +7,4 @@ description.workspace = true
 
 [dependencies]
 rk_calc = { path = "../rk_calc" }
+thiserror.workspace = true

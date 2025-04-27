@@ -19,4 +19,10 @@ fmt:
 fmt-check:
 	cargo fmt --all --check
 
-all-checks: clippy fmt-check test
+rkstep:
+	@cd rk_step_parser && cargo run --features cli --bin rkstep -- $(ARGS)
+
+rc:
+	$(MAKE) rkstep ARGS="write tests/fixtures/cube.step output/cube.step"
+
+all-checks: clippy fmt-check test rkstep rc

@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use super::{Edge, Face, Shell, Solid, TopologyError, Vertex};
+use super::{Edge, Face, Loop, Shell, Solid, TopologyError, Vertex};
 
 /// B-rep 全要素を格納するトップレベル
 #[derive(Debug, Default)]
@@ -75,6 +75,18 @@ impl Model {
     }
     pub fn solid(&self, id: usize) -> Option<&Solid> {
         self.solids.get(&id)
+    }
+
+    /// モデル内のすべての Loop を *値* で返すイテレータ
+    /// （各 Face の outer + inners）
+    pub fn loops(&self) -> impl Iterator<Item = Loop> + '_ {
+        self.faces.values().flat_map(|f| {
+            // 1つの Vec に outer + inners を所有権ごと集める
+            let mut all = Vec::with_capacity(1 + f.inners().len());
+            all.push(f.outer().clone()); // outer
+            all.extend(f.inners().iter().cloned()); // inners
+            all.into_iter() // 所有イテレータ
+        })
     }
 
     /// Shell を横断列挙したい場合のヘルパ
