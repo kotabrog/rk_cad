@@ -5,6 +5,7 @@ mod exporter;
 mod importer;
 mod raw_entity;
 mod step_file;
+pub mod typed;
 mod writer;
 
 pub use attr::{Attr, Node};

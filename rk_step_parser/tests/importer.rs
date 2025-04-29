@@ -2,7 +2,7 @@ use rk_step_parser::{build_graph, import_cube, parse_step_file, resolve_refs};
 const STEP: &str = include_str!("fixtures/cube.step");
 
 #[test]
-fn cube_roundtrip_counts() {
+fn cube_counts() {
     let sf = parse_step_file(STEP).unwrap();
     let g = build_graph(&sf.entities);
     resolve_refs(&g);
