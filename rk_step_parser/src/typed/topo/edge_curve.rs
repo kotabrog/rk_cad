@@ -1,4 +1,7 @@
-use super::{as_bool, as_id, expect_keyword, expect_token_count, tokenized, StepParse, StepWrite};
+use super::super::{
+    as_bool, as_id, expect_keyword, expect_token_count, fmt_step_bool, params_list, StepEntity,
+    StepParse, StepWrite,
+};
 use crate::{ParseError, RawEntity};
 
 #[derive(Debug, Clone, PartialEq)]
@@ -9,14 +12,16 @@ pub struct EdgeCurve {
     pub same_sense: bool,
 }
 
-impl StepParse for EdgeCurve {
+impl StepEntity for EdgeCurve {
     const KEYWORD: &'static str = "EDGE_CURVE";
+}
 
+impl StepParse for EdgeCurve {
     fn parse(e: &RawEntity) -> Result<Self, ParseError> {
         expect_keyword(e, Self::KEYWORD)?;
 
         // '' , #v1 , #v2 , #curve_id , .T.
-        let tok = tokenized(&e.params).collect::<Vec<_>>();
+        let tok = params_list(e);
         expect_token_count(&tok, 4, &e.params)?;
         let v1 = as_id(tok[0])?;
         let v2 = as_id(tok[1])?;
@@ -38,11 +43,11 @@ impl StepWrite for EdgeCurve {
             id,
             keyword: Self::KEYWORD.into(),
             params: format!(
-                "'', #{}, #{}, #{}, .{}.",
+                "'', #{}, #{}, #{}, {}",
                 self.v1,
                 self.v2,
                 self.curve_id,
-                if self.same_sense { "T" } else { "F" }
+                fmt_step_bool(self.same_sense),
             ),
         })
     }

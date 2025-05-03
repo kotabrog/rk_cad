@@ -1,4 +1,6 @@
-use super::{as_id, expect_keyword, expect_token_count, tokenized, StepParse, StepWrite};
+use super::super::{
+    as_id, expect_keyword, expect_token_count, params_list, StepEntity, StepParse, StepWrite,
+};
 use crate::{ParseError, RawEntity};
 
 #[derive(Debug, Clone, PartialEq)]
@@ -6,12 +8,15 @@ pub struct VertexPoint {
     pub point_id: usize,
 }
 
-impl StepParse for VertexPoint {
+impl StepEntity for VertexPoint {
     const KEYWORD: &'static str = "VERTEX_POINT";
+}
+
+impl StepParse for VertexPoint {
     fn parse(e: &RawEntity) -> Result<Self, ParseError> {
         expect_keyword(e, Self::KEYWORD)?;
         // '' , #123
-        let tok = tokenized(&e.params).collect::<Vec<_>>();
+        let tok = params_list(e);
         expect_token_count(&tok, 1, &e.params)?;
         let point_id = as_id(tok[0])?;
         Ok(VertexPoint { point_id })

@@ -1,4 +1,6 @@
-use super::{as_id, expect_keyword, expect_token_count, tokenized, StepParse, StepWrite};
+use super::super::{
+    as_id, expect_keyword, expect_token_count, tokenized, StepEntity, StepParse, StepWrite,
+};
 use crate::{ParseError, RawEntity};
 
 #[derive(Debug, Clone, PartialEq)]
@@ -6,8 +8,11 @@ pub struct Plane {
     pub axis2_id: usize,
 }
 
-impl StepParse for Plane {
+impl StepEntity for Plane {
     const KEYWORD: &'static str = "PLANE";
+}
+
+impl StepParse for Plane {
     fn parse(e: &RawEntity) -> Result<Self, ParseError> {
         expect_keyword(e, Self::KEYWORD)?;
         // '' , #axis

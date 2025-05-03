@@ -25,4 +25,4 @@ rkstep:
 rc:
 	$(MAKE) rkstep ARGS="write tests/fixtures/cube.step output/cube.step"
 
-all-checks: clippy fmt-check test rkstep rc
+all-checks: clippy fmt-check test

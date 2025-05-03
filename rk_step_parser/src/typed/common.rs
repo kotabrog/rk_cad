@@ -1,14 +1,17 @@
 use crate::{ParseError, RawEntity};
 use rk_calc::Vector3;
 
-/// STEP → struct
-pub trait StepParse: Sized {
+pub trait StepEntity {
     const KEYWORD: &'static str;
+}
+
+/// STEP → struct
+pub trait StepParse: StepEntity + Sized {
     fn parse(e: &RawEntity) -> Result<Self, ParseError>;
 }
 
 /// struct → STEP
-pub trait StepWrite {
+pub trait StepWrite: StepEntity {
     fn to_raw(&self, id: usize) -> Result<RawEntity, ParseError>;
 }
 
@@ -23,18 +26,47 @@ pub fn expect_keyword(e: &RawEntity, kw: &'static str) -> Result<(), ParseError>
     Ok(())
 }
 
-/// "'' , #123 , 4.5 , .T." → vec!["#123", "4.5", ".T."]
+/// 例:
+///   "'' , #123 , 4.5 , .T."          → ["#123", "4.5", ".T."]
+///   "'' , (-0., 1., 0.)"             → ["-0.", "1.", "0."]
+///   "'' , (#12, #13, #14)"           → ["#12", "#13", "#14"]
 pub fn tokenized(params: &str) -> impl Iterator<Item = &str> {
-    params
-        .trim_end_matches(';')
-        .trim_end_matches(')')
-        .split(',')
-        .skip(1) // 先頭 ''
-        .map(|s| s.trim())
+    // 末尾の ';' と外側の ')' をすべて取り除く
+    let mut trimmed = params.trim_end_matches(';');
+    while trimmed.ends_with(')') {
+        trimmed = &trimmed[..trimmed.len() - 1];
+    }
+
+    trimmed
+        .split(',') // まず ',' でブツ切り
+        .skip(1) // 先頭 '' (name) を捨てる
+        .map(|s| {
+            s.trim() // 前後空白
+                .trim_start_matches('(')
+                .trim_end_matches(')') // 内側の () も除去
+        })
+}
+
+/// パラメータ列を `Vec<&str>` に（先頭 '' を除いて括弧も剥ぐ）
+pub fn params_list(e: &RawEntity) -> Vec<&str> {
+    tokenized(&e.params).collect()
 }
 
 pub fn expect_token_count(tok: &[&str], count: usize, params: &str) -> Result<(), ParseError> {
     if tok.len() != count {
+        return Err(ParseError::Attr(format!(
+            "expected {} tokens, got {} in {}",
+            count,
+            tok.len(),
+            params
+        )));
+    }
+    Ok(())
+}
+
+/// tokenの数が count 以上であることを確認
+pub fn expect_token_count_min(tok: &[&str], count: usize, params: &str) -> Result<(), ParseError> {
+    if tok.len() < count {
         return Err(ParseError::Attr(format!(
             "expected {} tokens, got {} in {}",
             count,
@@ -91,6 +123,31 @@ pub fn fmt_step_real(v: f64) -> Result<String, ParseError> {
     Ok(out)
 }
 
+pub fn fmt_step_opt_id(id: Option<usize>) -> String {
+    match id {
+        Some(id) => format!("#{}", id),
+        None => "$".into(),
+    }
+}
+
+pub fn fmt_step_bool(b: bool) -> &'static str {
+    if b {
+        ".T."
+    } else {
+        ".F."
+    }
+}
+
+/// [#123, #456, #789] → "(#123, #456, #789)"
+pub fn fmt_step_id_list(ids: &[usize]) -> String {
+    let ids_str = ids
+        .iter()
+        .map(|id| format!("#{}", id))
+        .collect::<Vec<_>>()
+        .join(", ");
+    format!("({ids_str})")
+}
+
 /* ---------- ①  #123  → usize ---------------------------------- */
 pub fn as_id(tok: &str) -> Result<usize, ParseError> {
     let rest = tok
@@ -127,6 +184,13 @@ pub fn as_vec3(tok: &str) -> Result<Vector3, ParseError> {
 pub fn as_f64(tok: &str) -> Result<f64, ParseError> {
     tok.parse::<f64>()
         .map_err(|_| ParseError::Attr(format!("bad number: {tok}")))
+}
+
+pub fn as_id_opt(token: &str) -> Result<Option<usize>, ParseError> {
+    match token {
+        "$" | "*" => Ok(None),
+        _ => Ok(Some(as_id(token)?)),
+    }
 }
 
 /* ---------- ④  .T./.F. → bool --------------------------------- */
