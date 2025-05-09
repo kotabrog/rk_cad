@@ -7,6 +7,7 @@ mod raw_entity;
 mod step_file;
 pub mod typed;
 mod writer;
+mod entiry_attr;
 
 pub use attr::{Attr, Node};
 pub use builder::{build_graph, resolve_refs, Graph};

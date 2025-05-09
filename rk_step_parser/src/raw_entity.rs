@@ -38,3 +38,26 @@ pub fn parse_entity(buf: &str) -> Option<RawEntity> {
         None
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn parse_entity_simple() {
+        let raw = "#1 = AXIS2_PLACEMENT_3D('', (#2,#3,#4));";
+        let entity = parse_entity(raw).unwrap();
+        assert_eq!(entity.id, 1);
+        assert_eq!(entity.keyword, "AXIS2_PLACEMENT_3D");
+        assert_eq!(entity.params, "'', (#2,#3,#4)");
+    }
+
+    #[test]
+    fn parse_entity_complex() {
+        let raw = "#2 = DUMMY('', (#2,#3,#4,(#2,3.,4.111,.F.,.T.,*,$,'a'),1.1));";
+        let entity = parse_entity(raw).unwrap();
+        assert_eq!(entity.id, 2);
+        assert_eq!(entity.keyword, "DUMMY");
+        assert_eq!(entity.params, "'', (#2,#3,#4,(#2,3.,4.111,.F.,.T.,*,$,'a'),1.1)");
+    }
+}
