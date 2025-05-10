@@ -14,7 +14,7 @@ use rk_cad::{AnySurface, Loop, Model};
 use rk_calc::Vector3;
 use std::collections::HashMap;
 
-use crate::raw_entity::RawEntity;
+use super::old::raw_entity::RawEntity;
 use crate::step_file::StepFile;
 
 /* 公開関数 ───────────────────────────────────────── */

@@ -1,7 +1,7 @@
 //! ファイル全体を扱う層
 
+use super::old::raw_entity::{parse_entity, RawEntity};
 use super::ParseError;
-use crate::raw_entity::{parse_entity, RawEntity};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct StepFile {

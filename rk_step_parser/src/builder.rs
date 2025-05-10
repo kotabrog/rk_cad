@@ -8,7 +8,7 @@ use std::collections::HashMap;
 use std::rc::Rc;
 
 use crate::attr::{Attr, Node};
-use crate::raw_entity::RawEntity;
+use crate::old::raw_entity::RawEntity;
 
 pub type Graph = HashMap<usize, Rc<Node>>;
 

@@ -10,7 +10,7 @@ use std::str::FromStr;
 
 use thiserror::Error;
 
-use crate::raw_entity::RawEntity;
+use crate::raw_entity::{RawEntity, Record};
 
 /// 行を構造化した結果
 #[derive(Debug, Clone)]
@@ -23,19 +23,24 @@ pub struct Entity {
 /// STEP 属性
 #[derive(Debug, Clone, PartialEq)]
 pub enum Attr {
-    Id(usize),      // #123
-    Float(f64),     // 1.23E-4
-    Bool(bool),     // .T. / .TRUE.
-    Str(String),    // 'TEXT'
-    List(Vec<Attr>),// ( ... )
-    None,           // * or $
+    Id(usize),       // #123
+    Float(f64),      // 1.23E-4
+    Bool(bool),      // .T. / .TRUE.
+    Str(String),     // 'TEXT'
+    List(Vec<Attr>), // ( ... )
+    None,            // * or $
 }
 
 #[derive(Debug, Error, PartialEq)]
 pub enum AttrParseError {
-    #[error("unmatched parenthesis or quote")] Unmatched,
-    #[error("invalid number: {0}")] InvalidNumber(String),
-    #[error("invalid token: {0}")] InvalidToken(String),
+    #[error("unmatched parenthesis or quote")]
+    Unmatched,
+    #[error("invalid number: {0}")]
+    InvalidNumber(String),
+    #[error("invalid token: {0}")]
+    InvalidToken(String),
+    #[error("complex entity not supported (id #{0})")]
+    ComplexUnsupported(usize),
 }
 
 /// ------------------------------------------------------------
@@ -45,10 +50,17 @@ impl TryFrom<&RawEntity> for Entity {
     type Error = AttrParseError;
 
     fn try_from(src: &RawEntity) -> Result<Self, Self::Error> {
+        // 現段階では Record が 1 つだけ存在する行（＝単純エンティティ）に限定
+        if src.records.len() != 1 {
+            return Err(AttrParseError::ComplexUnsupported(src.id));
+        }
+
+        let rec: &Record = &src.records[0];
+        let kind = rec.keyword.clone().unwrap_or_default();
         Ok(Self {
             id: src.id,
-            kind: src.keyword.clone(),
-            attrs: parse_attr_slice(&src.params)?,
+            kind,
+            attrs: parse_attr_slice(&rec.params)?,
         })
     }
 }
@@ -163,18 +175,25 @@ mod tests {
     use super::*;
 
     fn raw(id: usize, kw: &str, params: &str) -> RawEntity {
-        RawEntity { id, keyword: kw.into(), params: params.into() }
+        let rec = Record {
+            keyword: Some(kw.into()),
+            params: params.into(),
+        };
+        RawEntity {
+            id,
+            records: vec![rec],
+        }
     }
 
     #[test]
     fn simple_ids() {
-        let e = Entity::try_from(&raw(1, "XYZ", "#1,#2,#3")) .unwrap();
+        let e = Entity::try_from(&raw(1, "XYZ", "#1,#2,#3")).unwrap();
         assert_eq!(e.attrs, vec![Attr::Id(1), Attr::Id(2), Attr::Id(3)]);
     }
 
     #[test]
     fn nested_list() {
-        let e = Entity::try_from(&raw(2, "XYZ", "#1,(1.0,2.0),.F.")) .unwrap();
+        let e = Entity::try_from(&raw(2, "XYZ", "#1,(1.0,2.0),.F.")).unwrap();
         assert_eq!(e.attrs.len(), 3);
         assert_eq!(e.attrs[0], Attr::Id(1));
         if let Attr::List(ref l) = e.attrs[1] {
@@ -187,12 +206,15 @@ mod tests {
 
     #[test]
     fn invalid_token() {
-        assert!(matches!(Entity::try_from(&raw(3, "XYZ", "(???)")), Err(AttrParseError::InvalidToken(_))));
+        assert!(matches!(
+            Entity::try_from(&raw(3, "XYZ", "(???)")),
+            Err(AttrParseError::InvalidToken(_))
+        ));
     }
 
     #[test]
     fn nested_nested_list() {
-        let e = Entity::try_from(&raw(4, "XYZ", "#1,(#2,(#3,#4)),.T.")) .unwrap();
+        let e = Entity::try_from(&raw(4, "XYZ", "#1,(#2,(#3,#4)),.T.")).unwrap();
         assert_eq!(e.attrs.len(), 3);
         assert_eq!(e.attrs[0], Attr::Id(1));
         if let Attr::List(ref l) = e.attrs[1] {
@@ -209,7 +231,7 @@ mod tests {
 
     #[test]
     fn float() {
-        let e = Entity::try_from(&raw(5, "XYZ", "1.23E-4,.5E+3,.0,1.,-1.0")) .unwrap();
+        let e = Entity::try_from(&raw(5, "XYZ", "1.23E-4,.5E+3,.0,1.,-1.0")).unwrap();
         assert_eq!(e.attrs.len(), 5);
         assert_eq!(e.attrs[0], Attr::Float(1.23E-4));
         assert_eq!(e.attrs[1], Attr::Float(0.5E+3));
@@ -220,7 +242,7 @@ mod tests {
 
     #[test]
     fn bool() {
-        let e = Entity::try_from(&raw(6, "XYZ", ".T.,.F.,.TRUE.,.FALSE.")) .unwrap();
+        let e = Entity::try_from(&raw(6, "XYZ", ".T.,.F.,.TRUE.,.FALSE.")).unwrap();
         assert_eq!(e.attrs.len(), 4);
         assert_eq!(e.attrs[0], Attr::Bool(true));
         assert_eq!(e.attrs[1], Attr::Bool(false));
@@ -230,7 +252,7 @@ mod tests {
 
     #[test]
     fn string() {
-        let e = Entity::try_from(&raw(7, "XYZ", "'hello','world','foo''bar'")) .unwrap();
+        let e = Entity::try_from(&raw(7, "XYZ", "'hello','world','foo''bar'")).unwrap();
         assert_eq!(e.attrs.len(), 3);
         assert_eq!(e.attrs[0], Attr::Str("hello".into()));
         assert_eq!(e.attrs[1], Attr::Str("world".into()));
@@ -239,7 +261,7 @@ mod tests {
 
     #[test]
     fn none() {
-        let e = Entity::try_from(&raw(8, "XYZ", "*,$")) .unwrap();
+        let e = Entity::try_from(&raw(8, "XYZ", "*,$")).unwrap();
         assert_eq!(e.attrs.len(), 2);
         assert_eq!(e.attrs[0], Attr::None);
         assert_eq!(e.attrs[1], Attr::None);
