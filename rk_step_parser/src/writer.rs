@@ -1,4 +1,4 @@
-use crate::step_file::StepFile;
+use crate::old::step_file::StepFile;
 use std::io::Write;
 
 pub fn write_step_file(step: &StepFile, mut w: impl Write) -> std::io::Result<()> {

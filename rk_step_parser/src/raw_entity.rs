@@ -1,12 +1,12 @@
 use regex::Regex;
 use std::sync::OnceLock;
+use thiserror::Error;
 
-// ===========================================================================
-// このファイルは STEP Part 21 の 1 行（インスタンス割り当て）を "生" の状態で
-// 扱うための軽量パーサを提供します。外部マッピング行（複数のエンティティ型を
-// ひとつの ID に束ねる書式）にも対応するため、右辺を Record の列として保持する
-// 方式を採用しています。
-// ===========================================================================
+// =============================================================================
+// STEP Part 21 の 1 行 (instance assignment) を "そのまま" 保持する構造体とパーサ。
+// 外部マッピング行 ("= ( A(...) B(...) )") を含めるため右辺を Record のベクタ
+// として保存する。エラー発生箇所を呼び出し側で判断できるよう、Result で返す。
+// =============================================================================
 
 /// `(KEYWORD(...))` もしくは `( ...(省略) )` の 1 かたまりを表す。
 /// キーワードが書かれていないケースに備えて `keyword` は `Option`。
@@ -24,6 +24,24 @@ pub struct RawEntity {
     pub id: usize,
     pub records: Vec<Record>,
 }
+
+/// STEP エンティティ行のパースエラー。
+/// MissingOpenParen, MissingCloseParen になるケースはないはず。（NoMatchになる）
+#[derive(Debug, Error, PartialEq)]
+pub enum RawEntityParseError {
+    #[error("line does not match STEP entity syntax")]
+    NoMatch,
+    #[error("invalid ID number: {0}")]
+    InvalidId(String),
+    #[error("unmatched parentheses")]
+    UnmatchedParenthesis,
+    #[error("record is missing opening '(': {token}")]
+    MissingOpenParen { token: String },
+    #[error("record is missing closing ')': {token}")]
+    MissingCloseParen { token: String },
+}
+
+type Result<T> = std::result::Result<T, RawEntityParseError>;
 
 // ---------------------------------------------------------------------------
 // 正規表現のコンパイルは高コストなので OnceLock で 1 度だけ初期化し再利用する。
@@ -47,76 +65,121 @@ fn complex_re() -> &'static Regex {
     })
 }
 
-/// 文字列 `buf` が 1 行分のエンティティであれば `Some(RawEntity)` を返す。
-/// マッチしなければ `None`。
-pub fn parse_entity(buf: &str) -> Option<RawEntity> {
-    // 1) 単純行を試す
-    if let Some(caps) = simple_re().captures(buf) {
-        let id: usize = caps[1].parse().ok()?;
-        let keyword = caps[2].to_string();
-        let params = caps[3].to_string();
-        return Some(RawEntity {
-            id,
-            records: vec![Record {
-                keyword: Some(keyword),
-                params,
-            }],
-        });
+// -----------------------------------------------------------------------------
+// Public API
+// -----------------------------------------------------------------------------
+/// 行 `buf` を解析する。
+/// * `Ok(Some(entity))` … STEP エンティティ行として成功
+/// * `Err(NoMatch)`    … エンティティ形式にマッチしない行
+/// * `Err(...)`        … 構文エラー
+pub fn parse_entity(buf: &str) -> Result<Option<RawEntity>> {
+    if let Some(entity) = try_parse_simple(buf)? {
+        return Ok(Some(entity));
     }
-
-    // 2) 外部マッピング行を試す
-    if let Some(caps) = complex_re().captures(buf) {
-        let id: usize = caps[1].parse().ok()?;
-        let body = caps[2].trim(); // 最外括弧内
-        let mut records = Vec::new();
-        for token in split_top_level(body) {
-            // token は "KEYWORD(...)" または "(...)" の形
-            if let Some(pos) = token.find('(') {
-                let kw = token[..pos].trim();
-                let params = token[pos + 1..token.len() - 1].to_string(); // 括弧を外す
-                let keyword = if kw.is_empty() {
-                    None
-                } else {
-                    Some(kw.to_string())
-                };
-                records.push(Record { keyword, params });
-            }
-        }
-        return Some(RawEntity { id, records });
+    if let Some(entity) = try_parse_complex(buf)? {
+        return Ok(Some(entity));
     }
-
-    // どちらにもマッチしない
-    None
+    Err(RawEntityParseError::NoMatch)
 }
 
-// ---------------------------------------------------------------------------
-// 与えられた文字列をトップレベルの括弧単位で分割するユーティリティ。
-// ネストを考慮し、"," や空白だけで区切るのではなく括弧深度が 0 でスペースが
-// 出た地点をトークン境界とみなす。
-// ---------------------------------------------------------------------------
-fn split_top_level(s: &str) -> Vec<&str> {
-    let mut depth = 0;
-    let mut start = 0;
-    let mut tokens = Vec::new();
+// -----------------------------------------------------------------------------
+// 単純エンティティ行の解析 – `#id = KEYWORD(...);`
+// -----------------------------------------------------------------------------
+fn try_parse_simple(buf: &str) -> Result<Option<RawEntity>> {
+    let caps = match simple_re().captures(buf) {
+        Some(c) => c,
+        None => return Ok(None),
+    };
+    let id: usize = caps[1]
+        .parse()
+        .map_err(|_| RawEntityParseError::InvalidId(caps[1].to_string()))?;
+    let keyword = caps[2].to_string();
+    let params = caps[3].to_string();
+    Ok(Some(RawEntity {
+        id,
+        records: vec![Record {
+            keyword: Some(keyword),
+            params,
+        }],
+    }))
+}
 
+// -----------------------------------------------------------------------------
+// 外部マッピング行の解析 – `#id = ( A(...) B(...) ... );`
+// -----------------------------------------------------------------------------
+fn try_parse_complex(buf: &str) -> Result<Option<RawEntity>> {
+    let caps = match complex_re().captures(buf) {
+        Some(c) => c,
+        None => return Ok(None),
+    };
+    let id: usize = caps[1]
+        .parse()
+        .map_err(|_| RawEntityParseError::InvalidId(caps[1].to_string()))?;
+    let body = caps[2].trim();
+    let tokens = split_top_level(body)?;
+    let mut records = Vec::with_capacity(tokens.len());
+    for tok in tokens {
+        records.push(token_to_record(tok)?);
+    }
+    Ok(Some(RawEntity { id, records }))
+}
+
+// -----------------------------------------------------------------------------
+// 1 トークンを Record 型へ変換
+// -----------------------------------------------------------------------------
+fn token_to_record(token: &str) -> Result<Record> {
+    let open = token
+        .find('(')
+        .ok_or_else(|| RawEntityParseError::MissingOpenParen {
+            token: token.to_string(),
+        })?;
+    if !token.ends_with(')') {
+        return Err(RawEntityParseError::MissingCloseParen {
+            token: token.to_string(),
+        });
+    }
+    let kw = token[..open].trim();
+    let params = token[open + 1..token.len() - 1].trim().to_string();
+    let keyword = if kw.is_empty() {
+        None
+    } else {
+        Some(kw.to_string())
+    };
+    Ok(Record { keyword, params })
+}
+
+// -----------------------------------------------------------------------------
+// トップレベル括弧単位で分割 – ネスト対応
+// -----------------------------------------------------------------------------
+fn split_top_level(s: &str) -> Result<Vec<&str>> {
+    let mut depth: isize = 0;
+    let mut start = 0usize;
+    let mut tokens = Vec::new();
     for (i, ch) in s.char_indices() {
         match ch {
             '(' => depth += 1,
-            ')' => depth -= 1,
-            // 深度 0 で空白または改行が来たら区切る
+            ')' => {
+                depth -= 1;
+                if depth < 0 {
+                    return Err(RawEntityParseError::UnmatchedParenthesis);
+                }
+            }
             c if depth == 0 && c.is_whitespace() => {
                 if start < i {
-                    tokens.push(s[start..i].trim());
+                    tokens.push(&s[start..i]);
                 }
-                start = i + 1;
+                start = i + c.len_utf8();
             }
             _ => {}
         }
     }
-    if start < s.len() {
-        tokens.push(s[start..].trim());
+    if depth != 0 {
+        return Err(RawEntityParseError::UnmatchedParenthesis);
     }
-    tokens
+    if start < s.len() {
+        tokens.push(&s[start..]);
+    }
+    Ok(tokens.into_iter().map(str::trim).collect())
 }
 
 #[cfg(test)]
@@ -126,7 +189,7 @@ mod tests {
     #[test]
     fn parse_entity_simple() {
         let src = "#1 = AXIS2_PLACEMENT_3D('', (#2,#3,#4));";
-        let ent = parse_entity(src).unwrap();
+        let ent = parse_entity(src).unwrap().unwrap();
         assert_eq!(ent.id, 1);
         assert_eq!(ent.records.len(), 1);
         assert_eq!(
@@ -139,7 +202,7 @@ mod tests {
     #[test]
     fn parse_entity_all_types() {
         let src = "#2 = DUMMY('', (#2,#3,#4,(#2,3.,4.111,.F.,.T.,*,$,'a'),1.1));";
-        let ent = parse_entity(src).unwrap();
+        let ent = parse_entity(src).unwrap().unwrap();
         assert_eq!(ent.id, 2);
         assert_eq!(ent.records.len(), 1);
         assert_eq!(ent.records[0].keyword.as_deref(), Some("DUMMY"));
@@ -152,7 +215,7 @@ mod tests {
     #[test]
     fn parse_entity_complex() {
         let src = "#166 = ( LENGTH_UNIT() NAMED_UNIT(*) SI_UNIT(.MILLI.,.METRE.) );";
-        let ent = parse_entity(src).unwrap();
+        let ent = parse_entity(src).unwrap().unwrap();
         assert_eq!(ent.id, 166);
         assert_eq!(ent.records.len(), 3);
         assert_eq!(ent.records[0].keyword.as_deref(), Some("LENGTH_UNIT"));
@@ -161,5 +224,29 @@ mod tests {
         assert_eq!(ent.records[1].params, "*");
         assert_eq!(ent.records[2].keyword.as_deref(), Some("SI_UNIT"));
         assert_eq!(ent.records[2].params, ".MILLI.,.METRE.");
+    }
+
+    #[test]
+    fn parse_entity_not_match() {
+        let src = "NOT_STEP_LINE";
+        let err = parse_entity(src).unwrap_err();
+        assert_eq!(err, RawEntityParseError::NoMatch);
+    }
+
+    #[test]
+    fn parse_entity_unmatched_parenthesis() {
+        let src = "#1 = (A(B(C(D(E(F(G(H(I(J(K(L(M(N(O(P(Q(R(S(T(U(V(W(X(Y(Z(0.0);";
+        let err = parse_entity(src).unwrap_err();
+        assert_eq!(err, RawEntityParseError::UnmatchedParenthesis);
+    }
+
+    #[test]
+    fn parse_entity_invalid_id() {
+        let src = "#11111111111111111111111111111111111 = AXIS2_PLACEMENT_3D('', (#2,#3,#4));";
+        let err = parse_entity(src).unwrap_err();
+        assert_eq!(
+            err,
+            RawEntityParseError::InvalidId("11111111111111111111111111111111111".to_string())
+        );
     }
 }

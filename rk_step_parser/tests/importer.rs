@@ -1,4 +1,5 @@
-use rk_step_parser::{build_graph, import_cube, parse_step_file, resolve_refs};
+use rk_step_parser::old::step_file::parse_step_file;
+use rk_step_parser::{build_graph, import_cube, resolve_refs};
 const STEP: &str = include_str!("fixtures/cube.step");
 
 #[test]

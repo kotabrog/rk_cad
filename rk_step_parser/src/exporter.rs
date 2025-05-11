@@ -15,7 +15,7 @@ use rk_calc::Vector3;
 use std::collections::HashMap;
 
 use super::old::raw_entity::RawEntity;
-use crate::step_file::StepFile;
+use crate::old::step_file::StepFile;
 
 /* 公開関数 ───────────────────────────────────────── */
 pub fn export_model(model: &Model) -> StepFile {

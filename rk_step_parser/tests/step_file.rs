@@ -1,4 +1,5 @@
-use rk_step_parser::{parse_step_file, write_step_file};
+use rk_step_parser::old::step_file::parse_step_file;
+use rk_step_parser::write_step_file;
 
 const CUBE_STEP: &str = include_str!("fixtures/cube.step");
 
