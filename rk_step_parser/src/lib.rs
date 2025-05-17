@@ -6,6 +6,7 @@ mod exporter;
 mod importer;
 pub mod old;
 mod raw_entity;
+mod step_file;
 pub mod typed;
 mod writer;
 
