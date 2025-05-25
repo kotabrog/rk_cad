@@ -10,10 +10,10 @@ use std::str::FromStr;
 
 use thiserror::Error;
 
-use crate::raw_entity::{RawEntity, Record};
+use crate::raw_entity::RawEntity;
 
 /// 行を構造化した結果
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Entity {
     pub id: usize,
     pub kind: String,
@@ -23,24 +23,27 @@ pub struct Entity {
 /// STEP 属性
 #[derive(Debug, Clone, PartialEq)]
 pub enum Attr {
-    Id(usize),       // #123
-    Float(f64),      // 1.23E-4
-    Bool(bool),      // .T. / .TRUE.
-    Str(String),     // 'TEXT'
-    List(Vec<Attr>), // ( ... )
-    None,            // * or $
+    Id(usize),                 // #123
+    Float(f64),                // 1.23E-4
+    Bool(bool),                // .T. / .TRUE.
+    Enum(String),              // .MILLI. など列挙値
+    Str(String),               // 'TEXT'
+    List(Vec<Attr>),           // ( ... )
+    Entity(Entity),         // 単純エンティティ用
+    Entities(Vec<Entity>),     // 複合エンティティ用
+    None,                      // * or $
 }
 
 #[derive(Debug, Error, PartialEq)]
 pub enum AttrParseError {
     #[error("unmatched parenthesis or quote")]
     Unmatched,
+    #[error("unmatched parenthesis or quote in entity #{0}")]
+    UnmatchedInEntity(usize),
     #[error("invalid number: {0}")]
     InvalidNumber(String),
     #[error("invalid token: {0}")]
     InvalidToken(String),
-    #[error("complex entity not supported (id #{0})")]
-    ComplexUnsupported(usize),
 }
 
 /// ------------------------------------------------------------
@@ -50,17 +53,39 @@ impl TryFrom<&RawEntity> for Entity {
     type Error = AttrParseError;
 
     fn try_from(src: &RawEntity) -> Result<Self, Self::Error> {
-        // 現段階では Record が 1 つだけ存在する行（＝単純エンティティ）に限定
-        if src.records.len() != 1 {
-            return Err(AttrParseError::ComplexUnsupported(src.id));
+        // ───────── 単純エンティティ ─────────
+        if src.records.len() == 1 {
+            let rec = &src.records[0];
+            let kind = rec.keyword.clone().unwrap_or_default();
+            let attrs = parse_attr_slice(&rec.params)
+                .map_err(|e| match e {
+                    AttrParseError::Unmatched => AttrParseError::UnmatchedInEntity(src.id),
+                    other => other,
+                })?;
+            return Ok(Self { id: src.id, kind, attrs });
         }
 
-        let rec: &Record = &src.records[0];
-        let kind = rec.keyword.clone().unwrap_or_default();
+        // ───────── 複合エンティティ ─────────
+        let mut subs = Vec::with_capacity(src.records.len());
+        for (idx, rec) in src.records.iter().enumerate() {
+            let kind = rec.keyword.clone().unwrap_or_default();
+            let attrs = parse_attr_slice(&rec.params)
+                .map_err(|e| match e {
+                    AttrParseError::Unmatched => AttrParseError::UnmatchedInEntity(src.id),
+                    other => other,
+                })?;
+            let sub_entity = Self {
+                id: idx,
+                kind,
+                attrs,
+            };
+            subs.push(sub_entity);
+        }
+
         Ok(Self {
             id: src.id,
-            kind,
-            attrs: parse_attr_slice(&rec.params)?,
+            kind: String::new(),
+            attrs: vec![Attr::Entities(subs)],
         })
     }
 }
@@ -141,6 +166,10 @@ fn parse_token(tok: &str) -> Result<Attr, AttrParseError> {
         ".F." | ".FALSE." => return Ok(Attr::Bool(false)),
         _ => {}
     }
+    // ─── Enum リテラル (.NAME.) ───
+    if tok.starts_with('.') && tok.ends_with('.') && tok.len() > 2 {
+        return Ok(Attr::Enum(upper.trim_matches('.').into()));
+    }
     // ネスト
     if tok.starts_with('(') && tok.ends_with(')') {
         let inner = &tok[1..tok.len() - 1];
@@ -173,6 +202,7 @@ fn parse_token(tok: &str) -> Result<Attr, AttrParseError> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::raw_entity::Record;
 
     fn raw(id: usize, kw: &str, params: &str) -> RawEntity {
         let rec = Record {
@@ -183,6 +213,18 @@ mod tests {
             id,
             records: vec![rec],
         }
+    }
+
+    fn raws(id: usize, recs: &[(&str, &str)]) -> RawEntity {
+        let records = recs
+            .iter()
+            .map(|(kw, params)| Record {
+                keyword: Some((*kw).into()),
+                params:  (*params).into(),
+            })
+            .collect();
+
+        RawEntity { id, records }
     }
 
     #[test]
@@ -202,6 +244,28 @@ mod tests {
             assert_eq!(l[1], Attr::Float(2.0));
         }
         assert_eq!(e.attrs[2], Attr::Bool(false));
+    }
+
+    #[test]
+    fn nested_entity() {
+        let e = Entity::try_from(&raws(3, &[
+            ("XYZ", "#1,#2"),
+            ("ABC", "#3,#4"),
+        ])).unwrap();
+        assert_eq!(e.attrs.len(), 1);
+        assert_eq!(e.kind, "");
+        assert_eq!(e.attrs[0], Attr::Entities(vec![
+            Entity {
+                id: 0,
+                kind: "XYZ".into(),
+                attrs: vec![Attr::Id(1), Attr::Id(2)],
+            },
+            Entity {
+                id: 1,
+                kind: "ABC".into(),
+                attrs: vec![Attr::Id(3), Attr::Id(4)],
+            },
+        ]));
     }
 
     #[test]
@@ -248,6 +312,16 @@ mod tests {
         assert_eq!(e.attrs[1], Attr::Bool(false));
         assert_eq!(e.attrs[2], Attr::Bool(true));
         assert_eq!(e.attrs[3], Attr::Bool(false));
+    }
+
+    #[test]
+    fn enum_() {
+        let e = Entity::try_from(&raw(7, "XYZ", ".MILLI.,.KILO.,.MEGA.,.GIGA.")).unwrap();
+        assert_eq!(e.attrs.len(), 4);
+        assert_eq!(e.attrs[0], Attr::Enum("MILLI".into()));
+        assert_eq!(e.attrs[1], Attr::Enum("KILO".into()));
+        assert_eq!(e.attrs[2], Attr::Enum("MEGA".into()));
+        assert_eq!(e.attrs[3], Attr::Enum("GIGA".into()));
     }
 
     #[test]

@@ -37,8 +37,6 @@ fn accumulate_record(
 ) {
     if buf.is_empty() {
         *start_lineno = lineno_0origin + 1; // 1-origin で保持
-    } else {
-        buf.push(' ');
     }
     buf.push_str(line);
 
