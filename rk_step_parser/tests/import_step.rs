@@ -6,5 +6,5 @@ fn test_import_step() {
     let entities = import_step(STEP).unwrap();
     println!("{:?}", entities);
     println!("entities: {}", entities.len());
-    assert_eq!(entities.len(), 8);
+    assert_eq!(entities.len(), 182);
 }

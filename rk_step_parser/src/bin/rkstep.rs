@@ -8,7 +8,8 @@ use std::{fs::File, path::PathBuf};
 use clap::{Parser, Subcommand};
 
 use rk_step_parser::{
-    build_graph, export_model, import_cube, parse_step_file, resolve_refs, write_step_file,
+    build_graph, export_model, import_cube, old::step_file::parse_step_file, resolve_refs,
+    write_step_file,
 };
 
 /// rkstep CLI

@@ -5,9 +5,8 @@
 use thiserror::Error;
 
 use crate::{
+    step_entiry::{parse_step_entity, StepEntity, StepEntityParseError},
     step_file::{parse_step_file, StepFileParseError},
-    raw_entity::{parse_raw_entity, RawEntityParseError},
-    entity_attr::{Entity, AttrParseError},
 };
 
 // ───────────────────────────────────
@@ -17,35 +16,34 @@ use crate::{
 pub enum ImportStepError {
     #[error(transparent)]
     StepFile(#[from] StepFileParseError),
-
     #[error(transparent)]
-    RawEntity(#[from] RawEntityParseError),
-
-    #[error(transparent)]
-    Attr(#[from] AttrParseError),
+    StepEntity(#[from] StepEntityParseError),
 }
 
 // ───────────────────────────────────
 // 公開 API
 // ───────────────────────────────────
-/// STEP ファイル文字列を受け取り、`Entity` ベクタを返す。
-/// - HEADER／Trailer はいったん無視して DATA→Entity/Attr だけ生成
+/// STEP ファイル文字列を受け取り、`StepEntity` ベクタを返す。
+/// - HEADER／Trailer はいったん無視して DATA→StepEntity だけ生成
 /// - 将来 CAD クラスへの変換は別フェーズで組み立てる
-pub fn import_step(src: &str) -> Result<Vec<Entity>, ImportStepError> {
+pub fn import_step(src: &str) -> Result<Vec<StepEntity>, ImportStepError> {
     // 文件全体を HEADER / DATA / Trailer に分離
     let step = parse_step_file(src)?;
 
     let mut entities = Vec::new();
 
     // DATA 行 → RawEntity → Entity(+Attr)
-    for raw_line in &step.entities {
-        // 行文字列 → Option<RawEntity>
-        if let Some(raw) = parse_raw_entity(raw_line)? {
-            // RawEntity → Entity(Attr)
-            let entity = Entity::try_from(&raw)?;
-            entities.push(entity);
+    for line in &step.entities {
+        let trimmed = line.trim();
+
+        // 空行・コメント行はスキップ
+        if trimmed.is_empty() || trimmed.starts_with("//") || trimmed.starts_with("/*") {
+            continue;
         }
-        // None の行はコメント・未対応行として無視
+
+        // 1 行を StepEntity(AST) へパース
+        let ast = parse_step_entity(trimmed)?;
+        entities.push(ast);
     }
 
     Ok(entities)
