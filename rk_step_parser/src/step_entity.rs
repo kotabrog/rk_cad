@@ -1,6 +1,5 @@
 //! 1 行の STEP レコード  →  StepEntity へ変換する簡易パーサ
 //! ・ISO 10303-21 Edition 3 のデータ部 (§12) に対応
-//! ・論理値 .T./.F./.U.，NULL($)，OMITTED(*)，バイナリ("ABCD") なども処理
 //! ・複合エンティティは `( KEYWORD(..) KEYWORD(..) … )` を Vec<SimpleEntity> へ展開
 
 use std::str::Chars;
@@ -14,14 +13,14 @@ pub struct StepEntity {
     pub parts: Vec<SimpleEntity>, // ← simple / complex どちらも対応
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct SimpleEntity {
     pub keyword: String,       // EDGE_LOOP, VERTEX_POINT …
     pub attrs: Vec<Parameter>, // ← エンティティの PARAMETER_LIST
 }
 
 /// PARAMETER ─ simple / aggregate / typed / null
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Parameter {
     // simple types (ISO 10303-21 §6.4)
     Integer(i64),
@@ -41,7 +40,7 @@ pub enum Parameter {
     Omitted, // *  (OPTIONAL 未指定)
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct TypedParameter {
     pub type_name: String,
     pub inner: Parameter,
