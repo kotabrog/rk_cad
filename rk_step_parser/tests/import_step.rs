@@ -7,7 +7,7 @@ fn test_import_step() {
     println!("{:?}", entities);
     println!("entities: {}", entities.len());
     // assert_eq!(entities.len(), 182);
-    assert_eq!(entities.len(), 53);
+    assert_eq!(entities.len(), 65);
 }
 
 // ADVANCED_BREP_SHAPE_REPRESENTATION
@@ -54,5 +54,5 @@ fn test_import_step() {
 // SURFACE_STYLE_FILL_AREA
 // SURFACE_STYLE_USAGE
 // UNCERTAINTY_MEASURE_WITH_UNIT
-// VECTOR
+// x VECTOR
 // x VERTEX_POINT

@@ -20,6 +20,22 @@ pub enum StepItemMapError {
     },
 }
 
+/// 参照idの確認
+/// 参照先のidが要件を満たしているかどうかを確認する
+fn validate_references(item_map: &StepItemMap) -> Result<(), StepItemMapError> {
+    for (id, items) in item_map {
+        for item in items {
+            match item.validate_refs(item_map) {
+                Ok(_) => {}
+                Err(e) => {
+                    return Err(StepItemMapError::ConvertPart { id: *id, source: e });
+                }
+            }
+        }
+    }
+    Ok(())
+}
+
 /// Convert a vector of `StepEntity` (DATA section) into a `StepItemMap`.
 /// Complex entities result in multiple `StepItem`s under the same id.
 /// * Unsupported keywords are **silently skipped** (they remain unparsed).
@@ -58,6 +74,8 @@ pub fn to_step_item_map(src: Vec<StepEntity>) -> Result<StepItemMap, StepItemMap
             map.insert(ent.id, items);
         }
     }
+    // Validate all references in the map
+    validate_references(&map)?;
     Ok(map)
 }
 
@@ -119,6 +137,49 @@ mod tests {
             assert!(matches!(source, ConversionStepItemError::ItemCount { .. }));
         } else {
             panic!("Expected ConvertPart error");
+        }
+    }
+
+    #[test]
+    fn to_step_item_map_validate_references() {
+        let src = vec![
+            "#1 = DIRECTION('', (1.0, 2.0, 3.0));",
+            "#2 = DIRECTION('', (4.0, 5.0, 6.0));",
+            "#3 = VECTOR('', #1, 2.0);", // Valid reference
+        ];
+
+        let entities: Result<Vec<StepEntity>, StepEntityParseError> =
+            src.into_iter().map(parse_step_entity).collect();
+        let entities = entities.unwrap();
+        let result = to_step_item_map(entities);
+        assert!(result.is_ok());
+        let item_map = result.unwrap();
+        assert_eq!(item_map.len(), 3);
+        assert!(item_map.contains_key(&1));
+        assert!(item_map.contains_key(&2));
+        assert!(item_map.contains_key(&3));
+    }
+
+    #[test]
+    fn to_step_item_map_invalid_reference() {
+        let src = vec![
+            "#1 = DIRECTION('', (1.0, 2.0, 3.0));",
+            "#2 = VECTOR('', #999, 2.0);", // Invalid reference
+        ];
+
+        let entities: Result<Vec<StepEntity>, StepEntityParseError> =
+            src.into_iter().map(parse_step_entity).collect();
+        let entities = entities.unwrap();
+        let result = to_step_item_map(entities);
+        assert!(result.is_err());
+        if let Err(StepItemMapError::ConvertPart { id, source }) = result {
+            assert_eq!(id, 2);
+            assert!(matches!(
+                source,
+                ConversionStepItemError::UnresolvedRef { .. }
+            ));
+        } else {
+            panic!("Expected ConvertPart error for unresolved reference");
         }
     }
 }

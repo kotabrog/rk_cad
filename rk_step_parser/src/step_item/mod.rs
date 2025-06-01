@@ -1,15 +1,17 @@
 mod common;
 mod geometry;
 
-pub use common::{ConversionStepItemError, FromSimple};
-pub use geometry::{CartesianPoint, Direction};
+pub use common::{ConversionStepItemError, FromSimple, ValidateRefs};
+pub use geometry::{CartesianPoint, Direction, Vector};
 
 use super::step_entity::SimpleEntity;
+use super::step_item_map::StepItemMap;
 
 #[derive(Debug)]
 pub enum StepItem {
     Direction(Box<Direction>),
     CartesianPoint(Box<CartesianPoint>),
+    Vector(Box<Vector>),
 }
 
 impl TryFrom<SimpleEntity> for StepItem {
@@ -20,7 +22,26 @@ impl TryFrom<SimpleEntity> for StepItem {
             "CARTESIAN_POINT" => Ok(StepItem::CartesianPoint(Box::new(
                 CartesianPoint::from_simple(se)?,
             ))),
+            "VECTOR" => Ok(StepItem::Vector(Box::new(Vector::from_simple(se)?))),
             other => Err(ConversionStepItemError::Unsupported(other.into())),
+        }
+    }
+}
+
+impl StepItem {
+    pub fn keyword(&self) -> &'static str {
+        match self {
+            StepItem::Direction(_) => "DIRECTION",
+            StepItem::CartesianPoint(_) => "CARTESIAN_POINT",
+            StepItem::Vector(_) => "VECTOR",
+        }
+    }
+
+    pub fn validate_refs(&self, arena: &StepItemMap) -> Result<(), ConversionStepItemError> {
+        match self {
+            StepItem::Direction(_) => Ok(()),
+            StepItem::CartesianPoint(_) => Ok(()),
+            StepItem::Vector(vec) => vec.validate_refs(arena),
         }
     }
 }
