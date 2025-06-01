@@ -27,7 +27,7 @@
 //! `Dim` flag.
 
 use super::super::common::{
-    aggregate_to_f64, expect_attr_len, ConversionStepItemError, FromSimple,
+    aggregate_to_f64, check_keyword, expect_attr_len, ConversionStepItemError, FromSimple,
 };
 use crate::step_entity::SimpleEntity;
 use rk_calc::Vector3;
@@ -41,10 +41,7 @@ impl FromSimple for Direction {
     const KEYWORD: &'static str = "DIRECTION";
 
     fn from_simple(se: SimpleEntity) -> Result<Self, ConversionStepItemError> {
-        // Keyword must match exactly (spec: CAPS only).
-        if se.keyword != Self::KEYWORD {
-            return Err(ConversionStepItemError::Unsupported(se.keyword));
-        }
+        check_keyword(&se, Self::KEYWORD)?;
 
         // Must have exactly 2 parameters (name, ratios).
         expect_attr_len(&se, 2, Self::KEYWORD)?;

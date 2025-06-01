@@ -33,6 +33,9 @@ pub enum ConversionStepItemError {
     #[error("{keyword}: 2‑D direction is currently unsupported in this library")]
     TwoDimUnsupported { keyword: &'static str },
 
+    #[error("{keyword}: 1‑D direction is currently unsupported in this library")]
+    OneDimUnsupported { keyword: &'static str },
+
     #[error("{keyword}: all direction ratios are zero")]
     AllZero { keyword: &'static str },
 }
@@ -40,6 +43,18 @@ pub enum ConversionStepItemError {
 pub trait FromSimple: Sized {
     const KEYWORD: &'static str;
     fn from_simple(se: SimpleEntity) -> Result<Self, ConversionStepItemError>;
+}
+
+/// Check if the keyword matches the expected one
+pub fn check_keyword(
+    se: &SimpleEntity,
+    expected: &'static str,
+) -> Result<(), ConversionStepItemError> {
+    if se.keyword == expected {
+        Ok(())
+    } else {
+        Err(ConversionStepItemError::Unsupported(se.keyword.clone()))
+    }
 }
 
 /// Ensure attribute length matches expectation.

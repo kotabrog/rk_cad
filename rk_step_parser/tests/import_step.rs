@@ -7,7 +7,7 @@ fn test_import_step() {
     println!("{:?}", entities);
     println!("entities: {}", entities.len());
     // assert_eq!(entities.len(), 182);
-    assert_eq!(entities.len(), 26);
+    assert_eq!(entities.len(), 53);
 }
 
 // ADVANCED_BREP_SHAPE_REPRESENTATION
@@ -15,7 +15,7 @@ fn test_import_step() {
 // APPLICATION_CONTEXT
 // APPLICATION_PROTOCOL_DEFINITION
 // AXIS2_PLACEMENT_3D
-// CARTESIAN_POINT
+// x CARTESIAN_POINT
 // CLOSED_SHELL
 // COLOUR_RGB
 // CURVE_STYLE
@@ -55,4 +55,4 @@ fn test_import_step() {
 // SURFACE_STYLE_USAGE
 // UNCERTAINTY_MEASURE_WITH_UNIT
 // VECTOR
-// VERTEX_POINT
+// x VERTEX_POINT
