@@ -26,14 +26,15 @@
 //! restriction can be lifted by storing a dynamic‑length vector or a
 //! `Dim` flag.
 
-use super::common::{aggregate_to_f64, expect_attr_len, ConversionStepItemError, FromSimple};
+use super::super::common::{
+    aggregate_to_f64, expect_attr_len, ConversionStepItemError, FromSimple,
+};
 use crate::step_entity::SimpleEntity;
+use rk_calc::Vector3;
 
 #[derive(Debug, Clone, Copy)]
 pub struct Direction {
-    pub x: f64,
-    pub y: f64,
-    pub z: f64,
+    pub vec: Vector3,
 }
 
 impl FromSimple for Direction {
@@ -73,9 +74,7 @@ impl FromSimple for Direction {
         }
 
         Ok(Direction {
-            x: ratios[0],
-            y: ratios[1],
-            z: ratios[2],
+            vec: Vector3::new(ratios[0], ratios[1], ratios[2]),
         })
     }
 }
@@ -99,9 +98,9 @@ mod tests {
             ],
         };
         let dir = Direction::from_simple(se).unwrap();
-        assert_eq!(dir.x, 1.0);
-        assert_eq!(dir.y, 2.0);
-        assert_eq!(dir.z, 3.0);
+        assert_eq!(dir.vec.x, 1.0);
+        assert_eq!(dir.vec.y, 2.0);
+        assert_eq!(dir.vec.z, 3.0);
     }
 
     #[test]

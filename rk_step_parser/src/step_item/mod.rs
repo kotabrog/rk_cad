@@ -1,8 +1,8 @@
 mod common;
-mod direction;
+mod geometry;
 
 pub use common::{ConversionStepItemError, FromSimple};
-pub use direction::Direction;
+pub use geometry::Direction;
 
 use super::step_entity::SimpleEntity;
 
