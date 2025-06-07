@@ -29,6 +29,7 @@
 use super::super::common::{
     aggregate_to_f64, check_keyword, expect_attr_len, ConversionStepItemError, FromSimple,
 };
+use super::super::StepItem;
 use crate::step_entity::SimpleEntity;
 use rk_calc::Vector3;
 
@@ -73,6 +74,12 @@ impl FromSimple for Direction {
         Ok(Direction {
             vec: Vector3::new(ratios[0], ratios[1], ratios[2]),
         })
+    }
+}
+
+impl From<Direction> for StepItem {
+    fn from(dir: Direction) -> Self {
+        StepItem::Direction(Box::new(dir))
     }
 }
 

@@ -1,11 +1,16 @@
 use std::collections::HashMap;
 
-use super::step_entity::{EntityId, StepEntity};
+use super::step_entity::{EntityId, SimpleEntity, StepEntity};
 use super::step_item::{ConversionStepItemError, StepItem};
+
+#[derive(Debug)]
+pub struct StepItems {
+    pub items: Vec<StepItem>,
+}
 
 /// `#id → Vec<StepItem>`  (still un‑linked, complex entities may
 /// contribute multiple StepItems to the same id)
-pub type StepItemMap = HashMap<EntityId, Vec<StepItem>>;
+pub type StepItemMap = HashMap<EntityId, StepItems>;
 
 #[derive(thiserror::Error, Debug)]
 pub enum StepItemMapError {
@@ -20,20 +25,66 @@ pub enum StepItemMapError {
     },
 }
 
+impl StepItems {
+    pub fn get_single(&self) -> Option<&StepItem> {
+        if self.items.len() == 1 {
+            Some(&self.items[0])
+        } else {
+            None
+        }
+    }
+
+    pub fn get_multiple(&self) -> Option<&Vec<StepItem>> {
+        if self.items.len() > 1 {
+            Some(&self.items)
+        } else {
+            None
+        }
+    }
+
+    pub fn new_with_one_item(item: StepItem) -> Self {
+        StepItems { items: vec![item] }
+    }
+}
+
+fn validate_refs_single(
+    id: EntityId,
+    item: &StepItem,
+    item_map: &StepItemMap,
+) -> Result<(), StepItemMapError> {
+    match item.validate_refs(item_map) {
+        Ok(_) => Ok(()),
+        Err(e) => Err(StepItemMapError::ConvertPart { id, source: e }),
+    }
+}
+
 /// 参照idの確認
 /// 参照先のidが要件を満たしているかどうかを確認する
 fn validate_references(item_map: &StepItemMap) -> Result<(), StepItemMapError> {
     for (id, items) in item_map {
-        for item in items {
-            match item.validate_refs(item_map) {
-                Ok(_) => {}
-                Err(e) => {
-                    return Err(StepItemMapError::ConvertPart { id: *id, source: e });
-                }
-            }
+        for item in &items.items {
+            validate_refs_single(*id, item, item_map)?;
         }
     }
     Ok(())
+}
+
+fn convert_step_item(
+    ent: SimpleEntity,
+    id: EntityId,
+) -> Result<Option<StepItem>, StepItemMapError> {
+    let keyword = ent.keyword.clone();
+    match StepItem::try_from(ent) {
+        Ok(item) => Ok(Some(item)),
+        Err(ConversionStepItemError::Unsupported(_)) => {
+            println!(
+                "Skipping unsupported keyword `{:?}` in entity #{}",
+                keyword, id
+            );
+            Ok(None)
+        }
+        Err(e) => Err(StepItemMapError::ConvertPart { id, source: e }),
+    }
 }
 
 /// Convert a vector of `StepEntity` (DATA section) into a `StepItemMap`.
@@ -51,27 +102,19 @@ pub fn to_step_item_map(src: Vec<StepEntity>) -> Result<StepItemMap, StepItemMap
         let mut skip_flag = false;
         let mut items = Vec::with_capacity(ent.parts.len());
         for part in ent.parts {
-            match StepItem::try_from(part.clone()) {
-                Ok(item) => items.push(item),
-                Err(ConversionStepItemError::Unsupported(_)) => {
+            let step_item = convert_step_item(part.clone(), ent.id)?;
+            match step_item {
+                Some(item) => items.push(item),
+                None => {
+                    // Unsupported entity, skip it
                     skip_flag = true;
-                    println!(
-                        "Skipping unsupported keyword `{:?}` in entity #{}",
-                        part, ent.id
-                    );
-                    continue;
-                }
-                Err(e) => {
-                    return Err(StepItemMapError::ConvertPart {
-                        id: ent.id,
-                        source: e,
-                    });
+                    break;
                 }
             }
         }
 
         if !skip_flag {
-            map.insert(ent.id, items);
+            map.insert(ent.id, StepItems { items });
         }
     }
     // Validate all references in the map

@@ -14,6 +14,7 @@ use super::super::common::{
     check_keyword, expect_attr_len, expect_non_negative, expect_reference, expect_single_item,
     numeric_to_f64, ConversionStepItemError, FromSimple, ValidateRefs,
 };
+use super::super::StepItem;
 use crate::step_entity::{EntityId, SimpleEntity};
 use crate::step_item_map::StepItemMap;
 
@@ -50,7 +51,14 @@ impl FromSimple for Vector {
 
 impl ValidateRefs for Vector {
     fn validate_refs(&self, arena: &StepItemMap) -> Result<(), ConversionStepItemError> {
-        expect_single_item(arena, self.orientation, "DIRECTION")
+        expect_single_item(arena, self.orientation, "DIRECTION")?;
+        Ok(())
+    }
+}
+
+impl From<Vector> for StepItem {
+    fn from(vec: Vector) -> Self {
+        StepItem::Vector(Box::new(vec))
     }
 }
 
@@ -59,7 +67,7 @@ mod tests {
     use super::super::{CartesianPoint, Direction};
     use super::*;
     use crate::step_entity::Parameter;
-    use crate::step_item::StepItem;
+    use crate::step_item_map::StepItems;
     use rk_calc::Vector3;
     use std::collections::HashMap;
 
@@ -168,9 +176,12 @@ mod tests {
         let mut arena = HashMap::new();
         arena.insert(
             1,
-            vec![StepItem::Direction(Box::new(Direction {
-                vec: Vector3::new(1.0, 2.0, 3.0),
-            }))],
+            StepItems::new_with_one_item(
+                Direction {
+                    vec: Vector3::new(1.0, 2.0, 3.0),
+                }
+                .into(),
+            ),
         );
 
         assert!(vector.validate_refs(&arena).is_ok());
@@ -182,7 +193,7 @@ mod tests {
             orientation: 999,
             magnitude: 2.0,
         };
-        let arena: HashMap<EntityId, Vec<StepItem>> = HashMap::new();
+        let arena: HashMap<EntityId, StepItems> = HashMap::new();
         let err = vector.validate_refs(&arena).unwrap_err();
         assert!(matches!(err, ConversionStepItemError::UnresolvedRef { id } if id == 999));
     }
@@ -196,9 +207,12 @@ mod tests {
         let mut arena = HashMap::new();
         arena.insert(
             1,
-            vec![StepItem::CartesianPoint(Box::new(CartesianPoint {
-                coords: Vector3::new(1.0, 2.0, 3.0),
-            }))],
+            StepItems::new_with_one_item(
+                CartesianPoint {
+                    coords: Vector3::new(1.0, 2.0, 3.0),
+                }
+                .into(),
+            ),
         );
         let err = vector.validate_refs(&arena).unwrap_err();
         assert!(
@@ -215,14 +229,18 @@ mod tests {
         let mut arena = HashMap::new();
         arena.insert(
             1,
-            vec![
-                StepItem::Direction(Box::new(Direction {
-                    vec: Vector3::new(1.0, 2.0, 3.0),
-                })),
-                StepItem::Direction(Box::new(Direction {
-                    vec: Vector3::new(4.0, 5.0, 6.0),
-                })),
-            ],
+            StepItems {
+                items: vec![
+                    Direction {
+                        vec: Vector3::new(1.0, 2.0, 3.0),
+                    }
+                    .into(),
+                    Direction {
+                        vec: Vector3::new(4.0, 5.0, 6.0),
+                    }
+                    .into(),
+                ],
+            },
         );
         let err = vector.validate_refs(&arena).unwrap_err();
         assert!(

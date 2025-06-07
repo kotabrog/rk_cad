@@ -1,5 +1,6 @@
 use thiserror::Error;
 
+use super::StepItem;
 use crate::step_entity::{EntityId, Parameter, SimpleEntity};
 use crate::step_item_map::StepItemMap;
 
@@ -176,28 +177,33 @@ pub fn expect_reference(
 ///   * `UnresolvedRef { id }` — #id が登録されていない  
 ///   * `MultiplicityMismatch { expected, found, id }` — 数が 1 でない
 ///   * `TypeMismatch { expected, found, id }` — 種類が違う
-pub fn expect_single_item(
-    map: &StepItemMap,
+pub fn expect_single_item<'a>(
+    map: &'a StepItemMap,
     id: EntityId,
     expected_kw: &'static str,
-) -> Result<(), ConversionStepItemError> {
+) -> Result<&'a StepItem, ConversionStepItemError> {
     match map.get(&id) {
         None => Err(ConversionStepItemError::UnresolvedRef { id }),
 
-        Some(items) if items.len() != 1 => Err(ConversionStepItemError::MultiplicityMismatch {
-            expected: expected_kw,
-            found: items.len(),
-            id,
-        }),
-
-        Some(items) if items[0].keyword() != expected_kw => {
-            Err(ConversionStepItemError::TypeMismatch {
-                expected: expected_kw,
-                found: items[0].keyword(),
-                id,
-            })
+        Some(item) => {
+            if item.items.len() == 1 {
+                let step_item = &item.items[0];
+                if step_item.keyword() == expected_kw {
+                    Ok(step_item)
+                } else {
+                    Err(ConversionStepItemError::TypeMismatch {
+                        expected: expected_kw,
+                        found: step_item.keyword(),
+                        id,
+                    })
+                }
+            } else {
+                Err(ConversionStepItemError::MultiplicityMismatch {
+                    expected: expected_kw,
+                    found: item.items.len(),
+                    id,
+                })
+            }
         }
-
-        Some(_) => Ok(()), // len == 1 かつ keyword 一致
     }
 }
