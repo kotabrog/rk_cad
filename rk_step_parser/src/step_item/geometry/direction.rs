@@ -79,7 +79,7 @@ impl FromSimple for Direction {
 
 impl From<Direction> for StepItem {
     fn from(dir: Direction) -> Self {
-        StepItem::Direction(Box::new(dir))
+        StepItem::Direction(dir.into())
     }
 }
 
@@ -92,14 +92,7 @@ mod tests {
     fn direction_from_simple() {
         let se = SimpleEntity {
             keyword: "DIRECTION".into(),
-            attrs: vec![
-                Parameter::String("''".into()),
-                Parameter::Aggregate(vec![
-                    Parameter::Real(1.0),
-                    Parameter::Real(2.0),
-                    Parameter::Real(3.0),
-                ]),
-            ],
+            attrs: vec![Parameter::String("''".into()), vec![1.0, 2.0, 3.0].into()],
         };
         let dir = Direction::from_simple(se).unwrap();
         assert_eq!(dir.vec.x, 1.0);
@@ -111,10 +104,7 @@ mod tests {
     fn direction_from_simple_2d() {
         let se = SimpleEntity {
             keyword: "DIRECTION".into(),
-            attrs: vec![
-                Parameter::String("''".into()),
-                Parameter::Aggregate(vec![Parameter::Real(1.0), Parameter::Real(2.0)]),
-            ],
+            attrs: vec![Parameter::String("''".into()), vec![1.0, 2.0].into()],
         };
         let err = Direction::from_simple(se).unwrap_err();
         assert!(
@@ -126,14 +116,7 @@ mod tests {
     fn direction_from_simple_all_zero() {
         let se = SimpleEntity {
             keyword: "DIRECTION".into(),
-            attrs: vec![
-                Parameter::String("''".into()),
-                Parameter::Aggregate(vec![
-                    Parameter::Real(0.0),
-                    Parameter::Real(0.0),
-                    Parameter::Real(0.0),
-                ]),
-            ],
+            attrs: vec![Parameter::String("''".into()), vec![0.0, 0.0, 0.0].into()],
         };
         let err = Direction::from_simple(se).unwrap_err();
         assert!(
@@ -147,12 +130,7 @@ mod tests {
             keyword: "DIRECTION".into(),
             attrs: vec![
                 Parameter::String("''".into()),
-                Parameter::Aggregate(vec![
-                    Parameter::Real(1.0),
-                    Parameter::Real(2.0),
-                    Parameter::Real(3.0),
-                    Parameter::Real(4.0), // Too many
-                ]),
+                vec![1.0, 2.0, 3.0, 4.0].into(),
             ],
         };
         let err = Direction::from_simple(se).unwrap_err();
@@ -168,7 +146,7 @@ mod tests {
             attrs: vec![
                 Parameter::String("''".into()),
                 Parameter::Aggregate(vec![
-                    Parameter::Real(1.0),
+                    1.0.into(),
                     Parameter::String("not_a_number".into()), // Invalid type
                 ]),
             ],
@@ -183,14 +161,7 @@ mod tests {
     fn direction_from_simple_unsupported_keyword() {
         let se = SimpleEntity {
             keyword: "UNSUPPORTED".into(),
-            attrs: vec![
-                Parameter::String("''".into()),
-                Parameter::Aggregate(vec![
-                    Parameter::Real(1.0),
-                    Parameter::Real(2.0),
-                    Parameter::Real(3.0),
-                ]),
-            ],
+            attrs: vec![Parameter::String("''".into()), vec![1.0, 2.0, 3.0].into()],
         };
         let err = Direction::from_simple(se).unwrap_err();
         assert!(
@@ -204,12 +175,8 @@ mod tests {
             keyword: "DIRECTION".into(),
             attrs: vec![
                 Parameter::String("''".into()),
-                Parameter::Aggregate(vec![
-                    Parameter::Real(1.0),
-                    Parameter::Real(2.0),
-                    Parameter::Real(3.0),
-                ]),
-                Parameter::Real(4.0), // Extra attribute
+                vec![1.0, 2.0, 3.0].into(),
+                4.0.into(), // Extra attribute
             ],
         };
         let err = Direction::from_simple(se).unwrap_err();

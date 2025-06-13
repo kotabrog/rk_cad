@@ -70,7 +70,7 @@ impl FromSimple for CartesianPoint {
 
 impl From<CartesianPoint> for StepItem {
     fn from(cp: CartesianPoint) -> Self {
-        StepItem::CartesianPoint(Box::new(cp))
+        StepItem::CartesianPoint(cp.into())
     }
 }
 

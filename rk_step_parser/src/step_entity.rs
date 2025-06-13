@@ -46,6 +46,30 @@ pub struct TypedParameter {
     pub inner: Parameter,
 }
 
+impl From<f64> for Parameter {
+    fn from(value: f64) -> Self {
+        Parameter::Real(value)
+    }
+}
+
+impl From<i64> for Parameter {
+    fn from(value: i64) -> Self {
+        Parameter::Integer(value)
+    }
+}
+
+impl From<Vec<Parameter>> for Parameter {
+    fn from(value: Vec<Parameter>) -> Self {
+        Parameter::Aggregate(value)
+    }
+}
+
+impl From<Vec<f64>> for Parameter {
+    fn from(value: Vec<f64>) -> Self {
+        Parameter::Aggregate(value.into_iter().map(Parameter::from).collect())
+    }
+}
+
 /* ─────────────── error type ─────────────── */
 
 #[derive(Debug, Error)]
