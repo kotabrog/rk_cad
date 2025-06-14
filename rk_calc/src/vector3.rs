@@ -31,6 +31,17 @@ impl Vector3 {
         Vector3::new(self.x / mag, self.y / mag, self.z / mag)
     }
 
+    /// magnitude が 0 の場合にエラーを返す正規化
+    pub fn normalize_checked(&self) -> Result<Self, CalcError> {
+        const EPS: f64 = 1e-12;
+        let mag = self.magnitude();
+        if mag < EPS {
+            Err(CalcError::ZeroVectorNormalization)
+        } else {
+            Ok(Vector3::new(self.x / mag, self.y / mag, self.z / mag))
+        }
+    }
+
     /// 他のベクトルとの距離（点としての距離計算）
     pub fn distance(self, other: &Self) -> f64 {
         (self - *other).magnitude()
@@ -134,6 +145,20 @@ mod tests {
         assert_eq!(normalized.x, 0.6);
         assert_eq!(normalized.y, 0.8);
         assert_eq!(normalized.z, 0.0);
+    }
+
+    #[test]
+    fn vector3_normalize_checked() {
+        let vector = Vector3::new(3.0, 4.0, 0.0);
+        let normalized = vector.normalize_checked().unwrap();
+        assert_eq!(normalized.magnitude(), 1.0); // 正規化後の大きさは 1
+        assert_eq!(normalized.x, 0.6);
+        assert_eq!(normalized.y, 0.8);
+        assert_eq!(normalized.z, 0.0);
+
+        let zero_vector = Vector3::new(0.0, 0.0, 0.0);
+        let err = zero_vector.normalize_checked();
+        assert!(matches!(err, Err(CalcError::ZeroVectorNormalization)));
     }
 
     #[test]

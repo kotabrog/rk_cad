@@ -23,6 +23,7 @@
 
 use super::super::common::{
     aggregate_to_f64, check_keyword, expect_attr_len, ConversionStepItemError, FromSimple,
+    HasKeyword, StepItemCast,
 };
 use super::super::StepItem;
 use crate::step_entity::SimpleEntity;
@@ -36,9 +37,11 @@ pub struct CartesianPoint {
     pub coords: Vector3,
 }
 
-impl FromSimple for CartesianPoint {
+impl HasKeyword for CartesianPoint {
     const KEYWORD: &'static str = "CARTESIAN_POINT";
+}
 
+impl FromSimple for CartesianPoint {
     fn from_simple(se: SimpleEntity) -> Result<Self, ConversionStepItemError> {
         check_keyword(&se, Self::KEYWORD)?;
 
@@ -64,6 +67,15 @@ impl FromSimple for CartesianPoint {
                 expected_max: 3,
                 found: n,
             }),
+        }
+    }
+}
+
+impl StepItemCast for CartesianPoint {
+    fn cast(item: &StepItem) -> Option<&Self> {
+        match item {
+            StepItem::CartesianPoint(boxed) => Some(boxed),
+            _ => None,
         }
     }
 }

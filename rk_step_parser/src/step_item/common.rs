@@ -22,6 +22,9 @@ pub enum ConversionStepItemError {
     #[error("{keyword}: attribute must be a reference to an entity")]
     NotReference { keyword: &'static str },
 
+    #[error("{keyword}: attribute must be a reference or null")]
+    NotReferenceOrNull { keyword: &'static str },
+
     #[error("{keyword}: non‑numeric value in aggregate")]
     NonNumeric { keyword: &'static str },
 
@@ -47,6 +50,12 @@ pub enum ConversionStepItemError {
     #[error("{keyword}: magnitude must be non‑negative")]
     NegativeMagnitude { keyword: &'static str },
 
+    #[error("{keyword}: failed to normalize the vector")]
+    NormalizeFailed { keyword: &'static str },
+
+    #[error("Axis2Placement3D: axis and ref_direction must be orthogonal")]
+    AxisRefDirectionNotOrthogonal,
+
     #[error("unresolved reference #{id}")]
     UnresolvedRef { id: EntityId },
 
@@ -65,8 +74,11 @@ pub enum ConversionStepItemError {
     },
 }
 
-pub trait FromSimple: Sized {
+pub trait HasKeyword {
     const KEYWORD: &'static str;
+}
+
+pub trait FromSimple: Sized + HasKeyword {
     fn from_simple(se: SimpleEntity) -> Result<Self, ConversionStepItemError>;
 }
 
@@ -74,6 +86,11 @@ pub trait FromSimple: Sized {
 pub trait ValidateRefs {
     /// arena: `EntityId -> StepItem` テーブル
     fn validate_refs(&self, arena: &StepItemMap) -> Result<(), ConversionStepItemError>;
+}
+
+pub trait StepItemCast: Sized + HasKeyword {
+    /// &StepItem を自分 (&Self) に変換
+    fn cast(item: &StepItem) -> Option<&Self>;
 }
 
 /// Check if the keyword matches the expected one
@@ -167,6 +184,18 @@ pub fn expect_reference(
     }
 }
 
+/// EntityIdかNullを期待するケース
+pub fn expect_reference_or_null(
+    param: &Parameter,
+    ctx: &'static str,
+) -> Result<Option<EntityId>, ConversionStepItemError> {
+    match param {
+        Parameter::Reference(id) => Ok(Some(*id)),
+        Parameter::Null => Ok(None),
+        _ => Err(ConversionStepItemError::NotReferenceOrNull { keyword: ctx }),
+    }
+}
+
 /// Ensure that `map[id]`
 /// * 存在している
 /// * 要素数が **1 つだけ**
@@ -205,5 +234,21 @@ pub fn expect_single_item<'a>(
                 })
             }
         }
+    }
+}
+
+/// 期待する型を指定して、`StepItem` の中身を取得する
+pub fn expect_single_item_cast<T: StepItemCast>(
+    map: &StepItemMap,
+    id: EntityId,
+) -> Result<&T, ConversionStepItemError> {
+    let item = expect_single_item(map, id, T::KEYWORD)?;
+    match T::cast(item) {
+        Some(casted) => Ok(casted),
+        None => Err(ConversionStepItemError::TypeMismatch {
+            expected: T::KEYWORD,
+            found: item.keyword(),
+            id,
+        }),
     }
 }

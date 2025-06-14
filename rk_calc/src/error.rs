@@ -5,4 +5,6 @@ pub enum CalcError {
     AxisTooSmall,
     /// Gram–Schmidt 直交化で、直交成分がほぼ零ベクトルになった
     NoOrthogonalComponent,
+    /// 正規化しようとしたベクトルがほぼ零ベクトルだった
+    ZeroVectorNormalization,
 }

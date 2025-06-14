@@ -12,7 +12,7 @@
 
 use super::super::common::{
     check_keyword, expect_attr_len, expect_non_negative, expect_reference, expect_single_item,
-    numeric_to_f64, ConversionStepItemError, FromSimple, ValidateRefs,
+    numeric_to_f64, ConversionStepItemError, FromSimple, HasKeyword, StepItemCast, ValidateRefs,
 };
 use super::super::StepItem;
 use crate::step_entity::{EntityId, SimpleEntity};
@@ -25,9 +25,11 @@ pub struct Vector {
     pub magnitude: f64,
 }
 
-impl FromSimple for Vector {
+impl HasKeyword for Vector {
     const KEYWORD: &'static str = "VECTOR";
+}
 
+impl FromSimple for Vector {
     fn from_simple(se: SimpleEntity) -> Result<Self, ConversionStepItemError> {
         check_keyword(&se, Self::KEYWORD)?;
 
@@ -53,6 +55,15 @@ impl ValidateRefs for Vector {
     fn validate_refs(&self, arena: &StepItemMap) -> Result<(), ConversionStepItemError> {
         expect_single_item(arena, self.orientation, "DIRECTION")?;
         Ok(())
+    }
+}
+
+impl StepItemCast for Vector {
+    fn cast(item: &StepItem) -> Option<&Self> {
+        match item {
+            StepItem::Vector(boxed) => Some(boxed),
+            _ => None,
+        }
     }
 }
 

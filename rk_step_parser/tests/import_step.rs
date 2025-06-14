@@ -7,14 +7,14 @@ fn test_import_step() {
     println!("{:?}", entities);
     println!("entities: {}", entities.len());
     // assert_eq!(entities.len(), 182);
-    assert_eq!(entities.len(), 65);
+    assert_eq!(entities.len(), 72);
 }
 
 // ADVANCED_BREP_SHAPE_REPRESENTATION
 // ADVANCED_FACE
 // APPLICATION_CONTEXT
 // APPLICATION_PROTOCOL_DEFINITION
-// AXIS2_PLACEMENT_3D
+// x AXIS2_PLACEMENT_3D
 // x CARTESIAN_POINT
 // CLOSED_SHELL
 // COLOUR_RGB

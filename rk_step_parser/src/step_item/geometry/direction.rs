@@ -28,6 +28,7 @@
 
 use super::super::common::{
     aggregate_to_f64, check_keyword, expect_attr_len, ConversionStepItemError, FromSimple,
+    HasKeyword, StepItemCast,
 };
 use super::super::StepItem;
 use crate::step_entity::SimpleEntity;
@@ -38,9 +39,11 @@ pub struct Direction {
     pub vec: Vector3,
 }
 
-impl FromSimple for Direction {
+impl HasKeyword for Direction {
     const KEYWORD: &'static str = "DIRECTION";
+}
 
+impl FromSimple for Direction {
     fn from_simple(se: SimpleEntity) -> Result<Self, ConversionStepItemError> {
         check_keyword(&se, Self::KEYWORD)?;
 
@@ -77,9 +80,25 @@ impl FromSimple for Direction {
     }
 }
 
+impl StepItemCast for Direction {
+    fn cast(item: &StepItem) -> Option<&Self> {
+        match item {
+            StepItem::Direction(boxed) => Some(boxed),
+            _ => None,
+        }
+    }
+}
+
 impl From<Direction> for StepItem {
     fn from(dir: Direction) -> Self {
         StepItem::Direction(dir.into())
+    }
+}
+
+impl Direction {
+    /// 正規化
+    pub fn normalize(self) -> Vector3 {
+        self.vec.normalize()
     }
 }
 
