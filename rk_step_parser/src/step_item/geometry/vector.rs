@@ -19,7 +19,7 @@ use crate::step_entity::{EntityId, SimpleEntity};
 use crate::step_item_map::StepItemMap;
 
 /// 解析直後（参照未解決）の VECTOR
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Vector {
     pub orientation: EntityId,
     pub magnitude: f64,

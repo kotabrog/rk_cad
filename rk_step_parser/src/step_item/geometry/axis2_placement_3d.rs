@@ -26,7 +26,7 @@ use crate::step_item_map::StepItemMap;
 use rk_calc::Vector3;
 
 /// 解析直後（参照未解決）の Axis2Placement3D
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Axis2Placement3D {
     pub location: EntityId,              // CartesianPoint
     pub axis: Option<EntityId>,          // Direction

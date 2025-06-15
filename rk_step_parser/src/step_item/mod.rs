@@ -1,8 +1,10 @@
 mod common;
 mod geometry;
+mod topology;
 
 pub use common::{ConversionStepItemError, FromSimple, ValidateRefs};
 pub use geometry::{Axis2Placement3D, CartesianPoint, Direction, Vector};
+pub use topology::VertexPoint;
 
 use super::step_entity::SimpleEntity;
 use super::step_item_map::StepItemMap;
@@ -13,6 +15,7 @@ pub enum StepItem {
     CartesianPoint(Box<CartesianPoint>),
     Vector(Box<Vector>),
     Axis2Placement3D(Box<Axis2Placement3D>),
+    VertexPoint(Box<VertexPoint>),
 }
 
 impl TryFrom<SimpleEntity> for StepItem {
@@ -27,6 +30,9 @@ impl TryFrom<SimpleEntity> for StepItem {
             "AXIS2_PLACEMENT_3D" => Ok(StepItem::Axis2Placement3D(Box::new(
                 Axis2Placement3D::from_simple(se)?,
             ))),
+            "VERTEX_POINT" => Ok(StepItem::VertexPoint(Box::new(VertexPoint::from_simple(
+                se,
+            )?))),
             other => Err(ConversionStepItemError::Unsupported(other.into())),
         }
     }
@@ -39,6 +45,7 @@ impl StepItem {
             StepItem::CartesianPoint(_) => "CARTESIAN_POINT",
             StepItem::Vector(_) => "VECTOR",
             StepItem::Axis2Placement3D(_) => "AXIS2_PLACEMENT_3D",
+            StepItem::VertexPoint(_) => "VERTEX_POINT",
         }
     }
 
@@ -48,6 +55,7 @@ impl StepItem {
             StepItem::CartesianPoint(_) => Ok(()),
             StepItem::Vector(vec) => vec.validate_refs(arena),
             StepItem::Axis2Placement3D(ap3d) => ap3d.validate_refs(arena),
+            StepItem::VertexPoint(vp) => vp.validate_refs(arena),
         }
     }
 }

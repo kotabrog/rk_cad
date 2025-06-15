@@ -32,7 +32,7 @@ use rk_calc::Vector3;
 /// # CARTESIAN_POINT
 /// 直交座標点（x, y, z）を表す。  
 /// - 2 D / 1 D は未対応（仕様上は有効）
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct CartesianPoint {
     pub coords: Vector3,
 }
