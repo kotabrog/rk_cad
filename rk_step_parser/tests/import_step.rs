@@ -7,7 +7,7 @@ fn test_import_step() {
     println!("{:?}", entities);
     println!("entities: {}", entities.len());
     // assert_eq!(entities.len(), 182);
-    assert_eq!(entities.len(), 80);
+    assert_eq!(entities.len(), 92);
 }
 
 // ADVANCED_BREP_SHAPE_REPRESENTATION
@@ -30,7 +30,7 @@ fn test_import_step() {
 // GLOBAL_UNCERTAINTY_ASSIGNED_CONTEXT
 // GLOBAL_UNIT_ASSIGNED_CONTEXT
 // LENGTH_UNIT
-// LINE
+// x LINE
 // MANIFOLD_SOLID_BREP
 // MECHANICAL_DESIGN_GEOMETRIC_PRESENTATION_REPRESENTATION
 // NAMED_UNIT

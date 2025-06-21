@@ -13,6 +13,10 @@
 //! WR4: (NOT EXISTS(axis)) OR (NOT EXISTS(ref_direction)) OR
 //!     (cross_product(axis, ref_direction).magnitude > 0.0);
 //! END_ENTITY;
+//!
+//! 配置 Z 軸方向を z、近似 X 軸方向を a とし、配置座標系の X・Y 軸方向 (x, y) を求める数値計算方法としては、以下を採用
+//! x = 投影されたベクトル a - (a·z) z を正規化
+//! y = z と x の外積を正規化
 
 use super::super::common::{
     check_keyword, expect_attr_len, expect_reference, expect_reference_or_null, expect_single_item,
@@ -100,7 +104,7 @@ impl Axis2Placement3D {
     pub fn axis_value(&self, arena: &StepItemMap) -> Result<Vector3, ConversionStepItemError> {
         if let Some(axis_id) = self.axis {
             let axis_item = expect_single_item_cast::<Direction>(arena, axis_id)?;
-            Ok(axis_item.normalize())
+            Ok(axis_item.vec.normalize())
         } else {
             Ok(Vector3::new(0.0, 0.0, 1.0))
         }
@@ -113,7 +117,7 @@ impl Axis2Placement3D {
     ) -> Result<Vector3, ConversionStepItemError> {
         if let Some(ref_dir_id) = self.ref_direction {
             let ref_dir_item = expect_single_item_cast::<Direction>(arena, ref_dir_id)?;
-            Ok(ref_dir_item.normalize())
+            Ok(ref_dir_item.vec.normalize())
         } else {
             Ok(Vector3::new(1.0, 0.0, 0.0))
         }

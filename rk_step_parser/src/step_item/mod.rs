@@ -3,7 +3,7 @@ mod geometry;
 mod topology;
 
 pub use common::{ConversionStepItemError, FromSimple, ValidateRefs};
-pub use geometry::{Axis2Placement3D, CartesianPoint, Direction, Vector};
+pub use geometry::{Axis2Placement3D, CartesianPoint, Direction, Line, Vector};
 pub use topology::VertexPoint;
 
 use super::step_entity::SimpleEntity;
@@ -16,6 +16,7 @@ pub enum StepItem {
     Vector(Box<Vector>),
     Axis2Placement3D(Box<Axis2Placement3D>),
     VertexPoint(Box<VertexPoint>),
+    Line(Box<Line>),
 }
 
 impl TryFrom<SimpleEntity> for StepItem {
@@ -33,6 +34,7 @@ impl TryFrom<SimpleEntity> for StepItem {
             "VERTEX_POINT" => Ok(StepItem::VertexPoint(Box::new(VertexPoint::from_simple(
                 se,
             )?))),
+            "LINE" => Ok(StepItem::Line(Box::new(Line::from_simple(se)?))),
             other => Err(ConversionStepItemError::Unsupported(other.into())),
         }
     }
@@ -46,6 +48,7 @@ impl StepItem {
             StepItem::Vector(_) => "VECTOR",
             StepItem::Axis2Placement3D(_) => "AXIS2_PLACEMENT_3D",
             StepItem::VertexPoint(_) => "VERTEX_POINT",
+            StepItem::Line(_) => "LINE",
         }
     }
 
@@ -56,6 +59,7 @@ impl StepItem {
             StepItem::Vector(vec) => vec.validate_refs(arena),
             StepItem::Axis2Placement3D(ap3d) => ap3d.validate_refs(arena),
             StepItem::VertexPoint(vp) => vp.validate_refs(arena),
+            StepItem::Line(line) => line.validate_refs(arena),
         }
     }
 }

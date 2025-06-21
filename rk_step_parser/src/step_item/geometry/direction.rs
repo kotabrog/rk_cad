@@ -34,7 +34,7 @@ use super::super::StepItem;
 use crate::step_entity::SimpleEntity;
 use rk_calc::Vector3;
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Direction {
     pub vec: Vector3,
 }
@@ -92,13 +92,6 @@ impl StepItemCast for Direction {
 impl From<Direction> for StepItem {
     fn from(dir: Direction) -> Self {
         StepItem::Direction(dir.into())
-    }
-}
-
-impl Direction {
-    /// 正規化
-    pub fn normalize(self) -> Vector3 {
-        self.vec.normalize()
     }
 }
 
