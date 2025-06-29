@@ -28,6 +28,9 @@ pub enum ConversionStepItemError {
     #[error("{keyword}: non‑numeric value in aggregate")]
     NonNumeric { keyword: &'static str },
 
+    #[error("{keyword}: attribute must be a boolean value")]
+    NotBoolean { keyword: &'static str },
+
     #[error(
         "{keyword}: item count must be between {expected_min} and {expected_max}, found {found}"
     )]
@@ -47,6 +50,9 @@ pub enum ConversionStepItemError {
     #[error("{keyword}: all direction ratios are zero")]
     AllZero { keyword: &'static str },
 
+    #[error("{keyword}: direction vector must not be zero")]
+    ZeroVector { keyword: &'static str },
+
     #[error("{keyword}: magnitude must be non‑negative")]
     NegativeMagnitude { keyword: &'static str },
 
@@ -55,6 +61,24 @@ pub enum ConversionStepItemError {
 
     #[error("Axis2Placement3D: axis and ref_direction must be orthogonal")]
     AxisRefDirectionNotOrthogonal,
+
+    #[error("{keyword}: point {point} is not on the edge {id}")]
+    PointNotOnEdge {
+        keyword: &'static str,
+        point: EntityId,
+        id: EntityId,
+    },
+
+    #[error("{keyword}: length must be greater than zero")]
+    ZeroLength { keyword: &'static str },
+
+    #[error(
+        "{keyword}: same_sense value does not match the actual direction: same_sense={same_sense}"
+    )]
+    SameSenseMismatch {
+        keyword: &'static str,
+        same_sense: bool,
+    },
 
     #[error("unresolved reference #{id}")]
     UnresolvedRef { id: EntityId },
@@ -136,6 +160,28 @@ pub fn numeric_to_f64(
         Parameter::Real(r) => Ok(*r),
         Parameter::Integer(i) => Ok(*i as f64),
         _ => Err(ConversionStepItemError::NonNumeric { keyword: ctx }),
+    }
+}
+
+/// Convert a boolean `Parameter` into bool.
+///
+/// * `ctx` … エラーメッセージに用いるキーワード（ENTITY 名など）
+///
+/// 成功: `Ok(bool)`
+/// 失敗: `NotBoolean { keyword: ctx }`
+pub fn boolean_to_bool(
+    param: &Parameter,
+    ctx: &'static str,
+) -> Result<bool, ConversionStepItemError> {
+    match param {
+        Parameter::Logical(b) => {
+            if let Some(b) = b {
+                Ok(*b)
+            } else {
+                Err(ConversionStepItemError::NotBoolean { keyword: ctx })
+            }
+        }
+        _ => Err(ConversionStepItemError::NotBoolean { keyword: ctx }),
     }
 }
 

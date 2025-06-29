@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::ops::Deref;
 
 use super::step_entity::{EntityId, SimpleEntity, StepEntity};
 use super::step_item::{ConversionStepItemError, StepItem};
@@ -10,7 +11,113 @@ pub struct StepItems {
 
 /// `#id → Vec<StepItem>`  (still un‑linked, complex entities may
 /// contribute multiple StepItems to the same id)
-pub type StepItemMap = HashMap<EntityId, StepItems>;
+#[derive(Debug)]
+pub struct StepItemMap {
+    pub items: HashMap<EntityId, StepItems>,
+    pub next_max_id: EntityId,
+}
+
+impl StepItemMap {
+    pub fn new() -> Self {
+        StepItemMap {
+            items: HashMap::new(),
+            next_max_id: 0,
+        }
+    }
+
+    pub fn with_capacity(capacity: usize) -> Self {
+        StepItemMap {
+            items: HashMap::with_capacity(capacity),
+            next_max_id: 0,
+        }
+    }
+
+    pub fn insert(&mut self, id: EntityId, items: StepItems) {
+        self.items.insert(id, items);
+        if id >= self.next_max_id {
+            self.next_max_id = id + 1;
+        }
+    }
+
+    pub fn insert_default_id(&mut self, items: StepItems) -> EntityId {
+        let id = self.next_max_id;
+        self.next_max_id += 1;
+        self.insert(id, items);
+        id
+    }
+
+    pub fn get(&self, id: &EntityId) -> Option<&StepItems> {
+        self.items.get(id)
+    }
+
+    pub fn remove(&mut self, id: &EntityId) -> Option<StepItems> {
+        self.items.remove(id)
+    }
+
+    pub fn contains_key(&self, id: &EntityId) -> bool {
+        self.items.contains_key(id)
+    }
+
+    pub fn len(&self) -> usize {
+        self.items.len()
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.items.is_empty()
+    }
+
+    pub fn iter(&self) -> impl Iterator<Item = (&EntityId, &StepItems)> {
+        self.items.iter()
+    }
+}
+
+impl std::ops::Index<EntityId> for StepItemMap {
+    type Output = StepItems;
+
+    fn index(&self, id: EntityId) -> &Self::Output {
+        self.items
+            .get(&id)
+            .expect("StepItemMap: index out of bounds")
+    }
+}
+
+impl Deref for StepItemMap {
+    type Target = HashMap<EntityId, StepItems>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.items
+    }
+}
+
+impl std::ops::DerefMut for StepItemMap {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.items
+    }
+}
+
+impl<'a> IntoIterator for &'a StepItemMap {
+    type Item = (&'a EntityId, &'a StepItems);
+    type IntoIter = std::collections::hash_map::Iter<'a, EntityId, StepItems>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.items.iter()
+    }
+}
+
+impl<'a> IntoIterator for &'a mut StepItemMap {
+    type Item = (&'a EntityId, &'a mut StepItems);
+    type IntoIter = std::collections::hash_map::IterMut<'a, EntityId, StepItems>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.items.iter_mut()
+    }
+}
+
+impl Default for StepItemMap {
+    fn default() -> Self {
+        StepItemMap::new()
+    }
+}
 
 #[derive(thiserror::Error, Debug)]
 pub enum StepItemMapError {
@@ -92,7 +199,7 @@ fn convert_step_item(
 /// * Unsupported keywords are **silently skipped** (they remain unparsed).
 /// * Any other conversion error aborts the whole process.
 pub fn to_step_item_map(src: Vec<StepEntity>) -> Result<StepItemMap, StepItemMapError> {
-    let mut map: StepItemMap = HashMap::with_capacity(src.len());
+    let mut map: StepItemMap = StepItemMap::with_capacity(src.len());
 
     for ent in src {
         if map.contains_key(&ent.id) {

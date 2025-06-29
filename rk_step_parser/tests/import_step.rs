@@ -7,7 +7,7 @@ fn test_import_step() {
     println!("{:?}", entities);
     println!("entities: {}", entities.len());
     // assert_eq!(entities.len(), 182);
-    assert_eq!(entities.len(), 98);
+    assert_eq!(entities.len(), 110);
 }
 
 // ADVANCED_BREP_SHAPE_REPRESENTATION
@@ -21,7 +21,7 @@ fn test_import_step() {
 // CURVE_STYLE
 // x DIRECTION
 // DRAUGHTING_PRE_DEFINED_CURVE_FONT
-// EDGE_CURVE
+// x EDGE_CURVE
 // EDGE_LOOP
 // FACE_BOUND
 // FILL_AREA_STYLE

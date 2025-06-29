@@ -17,7 +17,7 @@ use super::super::common::{
 use super::super::geometry::CartesianPoint;
 use super::super::StepItem;
 use crate::step_entity::{EntityId, SimpleEntity};
-use crate::step_item_map::StepItemMap;
+use crate::step_item_map::{StepItemMap, StepItems};
 use rk_calc::Vector3;
 
 /// Represents a STEP vertex_point entity.
@@ -76,6 +76,22 @@ impl VertexPoint {
         // vertex_geometry は CARTESIAN_POINT の参照であることを確認
         let point = expect_single_item_cast::<CartesianPoint>(arena, self.vertex_geometry)?;
         Ok(point.coords)
+    }
+
+    /// 各値から arena にStepItem を登録するクラスメソッド
+    pub fn register_step_item_map(
+        vertex_geometry_coord: Vector3,
+        arena: &mut StepItemMap,
+    ) -> EntityId {
+        let point = CartesianPoint {
+            coords: vertex_geometry_coord,
+        };
+        let id = arena.insert_default_id(StepItems::new_with_one_item(point.into()));
+
+        let vp = VertexPoint {
+            vertex_geometry: id,
+        };
+        arena.insert_default_id(StepItems::new_with_one_item(vp.into()))
     }
 }
 

@@ -1,9 +1,12 @@
 //! -----------------------------------------------------------------------------
 //! ISO 10303-42 ― ENTITY `VECTOR` 仕様要約
 //!
-//! ENTITY vector (geometric_representation_item)
-//!   orientation : direction;       -- #参照
-//!   magnitude   : length_measure;  -- ≥ 0.0
+//! ENTITY vector
+//!   SUBTYPE OF (geometric_representation_item);
+//!   orientation : direction;
+//!   magnitude   : length_measure;
+//! WHERE
+//!   WR1 : magnitude >= 0.0;
 //! END_ENTITY;
 //!
 //! * orientation は **必ず DIRECTION の ID**。
@@ -12,11 +15,14 @@
 
 use super::super::common::{
     check_keyword, expect_attr_len, expect_non_negative, expect_reference, expect_single_item,
-    numeric_to_f64, ConversionStepItemError, FromSimple, HasKeyword, StepItemCast, ValidateRefs,
+    expect_single_item_cast, numeric_to_f64, ConversionStepItemError, FromSimple, HasKeyword,
+    StepItemCast, ValidateRefs,
 };
 use super::super::StepItem;
+use super::Direction;
 use crate::step_entity::{EntityId, SimpleEntity};
-use crate::step_item_map::StepItemMap;
+use crate::step_item_map::{StepItemMap, StepItems};
+use rk_calc::Vector3;
 
 /// 解析直後（参照未解決）の VECTOR
 #[derive(Debug, Clone, PartialEq)]
@@ -73,14 +79,45 @@ impl From<Vector> for StepItem {
     }
 }
 
+impl Vector {
+    /// zero vector でないことの確認
+    pub fn is_non_zero_magnitude(&self) -> bool {
+        self.magnitude.abs() >= f64::EPSILON
+    }
+
+    pub fn orientation_value(
+        &self,
+        arena: &StepItemMap,
+    ) -> Result<Vector3, ConversionStepItemError> {
+        let dir_item = expect_single_item_cast::<Direction>(arena, self.orientation)?;
+        Ok(dir_item.vec)
+    }
+
+    /// 各値から arena に StepItem を登録する
+    pub fn register_to_item_map(
+        orientation_vec: Vector3,
+        magnitude: f64,
+        arena: &mut StepItemMap,
+    ) -> EntityId {
+        let direction = Direction {
+            vec: orientation_vec,
+        };
+        let dir_id = arena.insert_default_id(StepItems::new_with_one_item(direction.into()));
+
+        let vector = Vector {
+            orientation: dir_id,
+            magnitude,
+        };
+        arena.insert_default_id(StepItems::new_with_one_item(vector.into()))
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::super::{CartesianPoint, Direction};
     use super::*;
     use crate::step_entity::Parameter;
-    use crate::step_item_map::StepItems;
     use rk_calc::Vector3;
-    use std::collections::HashMap;
 
     #[test]
     fn vector_from_simple() {
@@ -184,7 +221,7 @@ mod tests {
             orientation: 1,
             magnitude: 2.0,
         };
-        let mut arena = HashMap::new();
+        let mut arena = StepItemMap::new();
         arena.insert(
             1,
             StepItems::new_with_one_item(
@@ -204,7 +241,7 @@ mod tests {
             orientation: 999,
             magnitude: 2.0,
         };
-        let arena: HashMap<EntityId, StepItems> = HashMap::new();
+        let arena = StepItemMap::new();
         let err = vector.validate_refs(&arena).unwrap_err();
         assert!(matches!(err, ConversionStepItemError::UnresolvedRef { id } if id == 999));
     }
@@ -215,7 +252,7 @@ mod tests {
             orientation: 1,
             magnitude: 2.0,
         };
-        let mut arena = HashMap::new();
+        let mut arena = StepItemMap::new();
         arena.insert(
             1,
             StepItems::new_with_one_item(
@@ -237,7 +274,7 @@ mod tests {
             orientation: 1,
             magnitude: 2.0,
         };
-        let mut arena = HashMap::new();
+        let mut arena = StepItemMap::new();
         arena.insert(
             1,
             StepItems {
