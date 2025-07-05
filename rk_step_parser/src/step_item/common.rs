@@ -31,6 +31,9 @@ pub enum ConversionStepItemError {
     #[error("{keyword}: attribute must be a boolean value")]
     NotBoolean { keyword: &'static str },
 
+    #[error("{keyword}: attribute must be omitted")]
+    NotOmitted { keyword: &'static str },
+
     #[error(
         "{keyword}: item count must be between {expected_min} and {expected_max}, found {found}"
     )]
@@ -239,6 +242,15 @@ pub fn expect_reference_or_null(
         Parameter::Reference(id) => Ok(Some(*id)),
         Parameter::Null => Ok(None),
         _ => Err(ConversionStepItemError::NotReferenceOrNull { keyword: ctx }),
+    }
+}
+
+/// Omittedを期待するケース
+pub fn expect_omitted(param: &Parameter, ctx: &'static str) -> Result<(), ConversionStepItemError> {
+    if let Parameter::Omitted = param {
+        Ok(())
+    } else {
+        Err(ConversionStepItemError::NotOmitted { keyword: ctx })
     }
 }
 

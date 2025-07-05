@@ -7,7 +7,7 @@ fn test_import_step() {
     println!("{:?}", entities);
     println!("entities: {}", entities.len());
     // assert_eq!(entities.len(), 182);
-    assert_eq!(entities.len(), 110);
+    assert_eq!(entities.len(), 134);
 }
 
 // ADVANCED_BREP_SHAPE_REPRESENTATION
@@ -34,7 +34,7 @@ fn test_import_step() {
 // MANIFOLD_SOLID_BREP
 // MECHANICAL_DESIGN_GEOMETRIC_PRESENTATION_REPRESENTATION
 // NAMED_UNIT
-// ORIENTED_EDGE
+// x ORIENTED_EDGE
 // x PLANE
 // PLANE_ANGLE_UNIT
 // PRESENTATION_STYLE_ASSIGNMENT

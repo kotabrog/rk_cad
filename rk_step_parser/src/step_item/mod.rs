@@ -4,7 +4,7 @@ mod topology;
 
 pub use common::{ConversionStepItemError, FromSimple, ValidateRefs};
 pub use geometry::{Axis2Placement3D, CartesianPoint, Direction, Line, Plane, Vector};
-pub use topology::{EdgeCurve, VertexPoint};
+pub use topology::{EdgeCurve, OrientedEdge, VertexPoint};
 
 use super::step_entity::SimpleEntity;
 use super::step_item_map::StepItemMap;
@@ -19,6 +19,7 @@ pub enum StepItem {
     Line(Box<Line>),
     Plane(Box<Plane>),
     EdgeCurve(Box<EdgeCurve>),
+    OrientedEdge(Box<OrientedEdge>),
 }
 
 impl TryFrom<SimpleEntity> for StepItem {
@@ -39,6 +40,9 @@ impl TryFrom<SimpleEntity> for StepItem {
             "LINE" => Ok(StepItem::Line(Box::new(Line::from_simple(se)?))),
             "PLANE" => Ok(StepItem::Plane(Box::new(Plane::from_simple(se)?))),
             "EDGE_CURVE" => Ok(StepItem::EdgeCurve(Box::new(EdgeCurve::from_simple(se)?))),
+            "ORIENTED_EDGE" => Ok(StepItem::OrientedEdge(Box::new(OrientedEdge::from_simple(
+                se,
+            )?))),
             other => Err(ConversionStepItemError::Unsupported(other.into())),
         }
     }
@@ -55,6 +59,7 @@ impl StepItem {
             StepItem::Line(_) => "LINE",
             StepItem::Plane(_) => "PLANE",
             StepItem::EdgeCurve(_) => "EDGE_CURVE",
+            StepItem::OrientedEdge(_) => "ORIENTED_EDGE",
         }
     }
 
@@ -68,6 +73,7 @@ impl StepItem {
             StepItem::Line(line) => line.validate_refs(arena),
             StepItem::Plane(plane) => plane.validate_refs(arena),
             StepItem::EdgeCurve(edge_curve) => edge_curve.validate_refs(arena),
+            StepItem::OrientedEdge(oriented_edge) => oriented_edge.validate_refs(arena),
         }
     }
 }
