@@ -44,6 +44,9 @@ pub enum ConversionStepItemError {
         found: usize,
     },
 
+    #[error("{keyword}: expected at least one item")]
+    NonEmptyList { keyword: &'static str },
+
     #[error("{keyword}: 2‑D direction is currently unsupported in this library")]
     TwoDimUnsupported { keyword: &'static str },
 
@@ -82,6 +85,23 @@ pub enum ConversionStepItemError {
         keyword: &'static str,
         same_sense: bool,
     },
+
+    #[error("{keyword}: start and end points of the loop are different: start={start}, end={end}")]
+    LoopStartEndMismatch {
+        keyword: &'static str,
+        start: EntityId,
+        end: EntityId,
+    },
+
+    #[error("{keyword}: path is not connected: start={start}, end={end}")]
+    PathNotConnected {
+        keyword: &'static str,
+        start: EntityId,
+        end: EntityId,
+    },
+
+    #[error("{keyword}: reference {id} is used multiple times")]
+    DuplicateReference { keyword: &'static str, id: EntityId },
 
     #[error("unresolved reference #{id}")]
     UnresolvedRef { id: EntityId },
@@ -198,6 +218,23 @@ pub fn aggregate_to_f64(
         for p in items {
             let value = numeric_to_f64(p, ctx)?;
             out.push(value);
+        }
+        Ok(out)
+    } else {
+        Err(ConversionStepItemError::NotAggregate { keyword: ctx })
+    }
+}
+
+/// Convert an aggregate of Reference parameters into Vec<EntityId>.
+pub fn aggregate_to_reference(
+    param: &Parameter,
+    ctx: &'static str,
+) -> Result<Vec<EntityId>, ConversionStepItemError> {
+    if let Parameter::Aggregate(items) = param {
+        let mut out = Vec::with_capacity(items.len());
+        for p in items {
+            let id = expect_reference(p, ctx)?;
+            out.push(id);
         }
         Ok(out)
     } else {

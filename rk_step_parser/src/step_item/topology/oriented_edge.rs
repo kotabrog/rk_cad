@@ -20,9 +20,10 @@
 
 use super::super::common::{
     boolean_to_bool, check_keyword, expect_attr_len, expect_omitted, expect_reference,
-    expect_single_item, ConversionStepItemError, FromSimple, HasKeyword, StepItemCast,
+    expect_single_item, expect_single_item_cast, ConversionStepItemError, FromSimple, HasKeyword,
+    StepItemCast,
 };
-use super::super::StepItem;
+use super::super::{EdgeCurve, StepItem};
 use crate::step_entity::{EntityId, SimpleEntity};
 use crate::step_item::ValidateRefs;
 use crate::step_item_map::{StepItemMap, StepItems};
@@ -88,22 +89,51 @@ impl From<OrientedEdge> for StepItem {
 }
 
 impl OrientedEdge {
-    pub fn register_step_item_map(
+    pub fn new(edge_element: EntityId, orientation: bool) -> Self {
+        Self {
+            edge_element,
+            orientation,
+        }
+    }
+
+    pub fn new_and_register(
         edge_element: EntityId,
         orientation: bool,
         arena: &mut StepItemMap,
     ) -> EntityId {
-        let oriented_edge = OrientedEdge {
-            edge_element,
-            orientation,
-        };
+        let oriented_edge = Self::new(edge_element, orientation);
         arena.insert_default_id(StepItems::new_with_one_item(oriented_edge.into()))
+    }
+
+    /// `start_id`と`end_id`から考えられる自然なlineの`OrientedEdge`を登録する
+    pub fn register_step_item_map_line_default(
+        start_id: EntityId,
+        end_id: EntityId,
+        orientation: bool,
+        arena: &mut StepItemMap,
+    ) -> Result<EntityId, ConversionStepItemError> {
+        let edge_curve = EdgeCurve::register_step_item_map_line_default(start_id, end_id, arena)?;
+        let oriented_edge = OrientedEdge::new(edge_curve, orientation);
+        Ok(arena.insert_default_id(StepItems::new_with_one_item(oriented_edge.into())))
+    }
+
+    /// orientationを考慮したedgeの始点と終点を取得する
+    pub fn edge_start_and_end(
+        &self,
+        arena: &StepItemMap,
+    ) -> Result<(EntityId, EntityId), ConversionStepItemError> {
+        let edge_curve = expect_single_item_cast::<EdgeCurve>(arena, self.edge_element)?;
+
+        if self.orientation {
+            Ok((edge_curve.edge_start, edge_curve.edge_end))
+        } else {
+            Ok((edge_curve.edge_end, edge_curve.edge_start))
+        }
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use super::super::EdgeCurve;
     use super::*;
     use crate::step_entity::Parameter;
     use crate::step_item::common::expect_single_item_cast;
@@ -201,7 +231,7 @@ mod tests {
             true,
             &mut arena,
         );
-        let edge_element = OrientedEdge::register_step_item_map(edge_curve_id, true, &mut arena);
+        let edge_element = OrientedEdge::new_and_register(edge_curve_id, true, &mut arena);
 
         let oriented_edge = expect_single_item_cast::<OrientedEdge>(&arena, edge_element).unwrap();
         let result = oriented_edge.validate_refs(&arena);
@@ -211,7 +241,7 @@ mod tests {
     #[test]
     fn test_oriented_edge_validate_refs_invalid() {
         let mut arena = StepItemMap::new();
-        let edge_element = OrientedEdge::register_step_item_map(999, true, &mut arena); // Invalid ID
+        let edge_element = OrientedEdge::new_and_register(999, true, &mut arena); // Invalid ID
 
         let oriented_edge = expect_single_item_cast::<OrientedEdge>(&arena, edge_element).unwrap();
         let result = oriented_edge.validate_refs(&arena);

@@ -168,6 +168,29 @@ impl EdgeCurve {
         };
         arena.insert_default_id(StepItems::new_with_one_item(edge_curve.into()))
     }
+
+    pub fn register_step_item_map_line_default(
+        start_id: EntityId,
+        end_id: EntityId,
+        arena: &mut StepItemMap,
+    ) -> Result<EntityId, ConversionStepItemError> {
+        let start_vertex = expect_single_item_cast::<VertexPoint>(arena, start_id)?;
+        let start_coord = start_vertex.vertex_geometry_value(arena)?;
+        let end_vertex = expect_single_item_cast::<VertexPoint>(arena, end_id)?;
+        let end_coord = end_vertex.vertex_geometry_value(arena)?;
+
+        let line_pnt_coord = start_coord;
+        let line_dir = end_coord - start_coord;
+        let line_magnitude = 1.0;
+        let line_id = Line::register_step_item_map(line_pnt_coord, line_dir, line_magnitude, arena);
+        let edge_curve = EdgeCurve {
+            edge_start: start_id,
+            edge_end: end_id,
+            edge_geometry: line_id,
+            same_sense: true,
+        };
+        Ok(arena.insert_default_id(StepItems::new_with_one_item(edge_curve.into())))
+    }
 }
 
 #[cfg(test)]
