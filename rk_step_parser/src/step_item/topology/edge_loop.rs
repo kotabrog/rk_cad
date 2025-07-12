@@ -39,10 +39,11 @@ use super::super::common::{
     aggregate_to_reference, check_keyword, expect_attr_len, expect_single_item_cast,
     ConversionStepItemError, FromSimple, HasKeyword, StepItemCast,
 };
-use super::super::{OrientedEdge, StepItem};
+use super::super::{OrientedEdge, StepItem, VertexPoint};
 use crate::step_entity::{EntityId, SimpleEntity};
 use crate::step_item::ValidateRefs;
 use crate::step_item_map::{StepItemMap, StepItems};
+use rk_calc::Vector3;
 
 #[derive(Debug, Clone)]
 pub struct EdgeLoop {
@@ -151,6 +152,27 @@ impl EdgeLoop {
     pub fn new_and_register(edge_list: Vec<EntityId>, arena: &mut StepItemMap) -> EntityId {
         let edge_loop = Self::new(edge_list);
         arena.insert_default_id(StepItems::new_with_one_item(edge_loop.into()))
+    }
+
+    pub fn register_step_item_map_line_default_loop(
+        points: Vec<Vector3>,
+        arena: &mut StepItemMap,
+    ) -> EntityId {
+        let mut edge_list = Vec::with_capacity(points.len());
+        for i in 0..points.len() {
+            let start_point = VertexPoint::register_step_item_map(points[i], arena);
+            let end_point =
+                VertexPoint::register_step_item_map(points[(i + 1) % points.len()], arena);
+            let oriented_edge = OrientedEdge::register_step_item_map_line_default(
+                start_point,
+                end_point,
+                true,
+                arena,
+            )
+            .unwrap();
+            edge_list.push(oriented_edge);
+        }
+        Self::new_and_register(edge_list, arena)
     }
 }
 
