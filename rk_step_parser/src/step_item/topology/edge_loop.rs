@@ -1,4 +1,4 @@
-//! Representation of the STEP **edge_loop** entity (ISO 10303‑42).
+//! Representation of the STEP **edge_loop** entity (ISO 10303‑42:2003).
 //!
 //! ENTITY edge_loop
 //!   SUBTYPE OF (loop, path);

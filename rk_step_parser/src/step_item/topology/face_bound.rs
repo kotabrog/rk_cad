@@ -1,4 +1,4 @@
-//! Representation of the STEP **face_bound** entity (ISO 10303‑42).
+//! Representation of the STEP **face_bound** entity (ISO 10303‑42:2003).
 //!
 //! ENTITY face_bound
 //!   SUBTYPE OF (topological_representation_item);

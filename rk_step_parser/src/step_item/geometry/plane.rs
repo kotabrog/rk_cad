@@ -1,5 +1,5 @@
 //! -----------------------------------------------------------------------------
-//! ISO 10303-42 ― ENTITY `PLANE` 仕様要約
+//! ISO 10303-42:2003 ― ENTITY `PLANE` 仕様要約
 //!
 //! ENTITY plane
 //!   SUBTYPE OF (elementary_surface);

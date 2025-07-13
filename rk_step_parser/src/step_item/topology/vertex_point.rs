@@ -1,4 +1,4 @@
-//! Representation of the STEP **vertex_point** entity (ISO 10303‑42).
+//! Representation of the STEP **vertex_point** entity (ISO 10303‑42:2003).
 //!
 //! ENTITY vertex_point
 //!   SUBTYPE OF (vertex, geometric_representation_item);

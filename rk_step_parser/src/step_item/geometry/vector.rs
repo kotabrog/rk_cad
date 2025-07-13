@@ -1,5 +1,5 @@
 //! -----------------------------------------------------------------------------
-//! ISO 10303-42 ― ENTITY `VECTOR` 仕様要約
+//! ISO 10303-42:2003 ― ENTITY `VECTOR` 仕様要約
 //!
 //! ENTITY vector
 //!   SUBTYPE OF (geometric_representation_item);

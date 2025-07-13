@@ -1,4 +1,4 @@
-//! Representation of the STEP **edge_curve** entity (ISO 10303‑42).
+//! Representation of the STEP **edge_curve** entity (ISO 10303‑42:2003).
 //!
 //! ENTITY edge_curve
 //!   SUBTYPE OF (edge, geometric_representation_item);

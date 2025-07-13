@@ -1,4 +1,4 @@
-//! Representation of the STEP **DIRECTION** entity (ISO 10303‑42).
+//! Representation of the STEP **DIRECTION** entity (ISO 10303‑42:2003).
 //!
 //! EXPRESS excerpt:
 //! ```text

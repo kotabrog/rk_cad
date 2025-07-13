@@ -1,4 +1,4 @@
-//! ISO 10303-42 ― ENTITY `CARTESIAN_POINT` （2021 版）
+//! ISO 10303-42 ― ENTITY `CARTESIAN_POINT` （2003 版）
 //!
 //! ```exp
 //! ENTITY cartesian_point

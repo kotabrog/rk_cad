@@ -1,4 +1,4 @@
-//! Representation of the STEP **axis2_placement_3d** entity (ISO 10303‑42).
+//! Representation of the STEP **axis2_placement_3d** entity (ISO 10303‑42:2003).
 //!
 //! ENTITY axis2_placement_3d
 //!   SUBTYPE OF (placement);

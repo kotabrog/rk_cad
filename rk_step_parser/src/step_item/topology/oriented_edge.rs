@@ -1,4 +1,4 @@
-//! Representation of the STEP **oriented_edge** entity (ISO 10303‑42).
+//! Representation of the STEP **oriented_edge** entity (ISO 10303‑42:2003).
 //!
 //! ENTITY oriented_edge
 //!   SUBTYPE OF (edge);
