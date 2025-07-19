@@ -47,6 +47,9 @@ pub enum ConversionStepItemError {
     #[error("{keyword}: expected at least one item")]
     NonEmptyList { keyword: &'static str },
 
+    #[error("{keyword}: expected at most one item")]
+    SingleItemExpected { keyword: &'static str },
+
     #[error("{keyword}: 2‑D direction is currently unsupported in this library")]
     TwoDimUnsupported { keyword: &'static str },
 

@@ -19,10 +19,11 @@ use super::super::common::{
     check_keyword, expect_attr_len, expect_reference, expect_single_item, ConversionStepItemError,
     FromSimple, HasKeyword, StepItemCast,
 };
-use super::super::StepItem;
+use super::super::{Axis2Placement3D, StepItem};
 use crate::step_entity::{EntityId, SimpleEntity};
 use crate::step_item::ValidateRefs;
-use crate::step_item_map::StepItemMap;
+use crate::step_item_map::{StepItemMap, StepItems};
+use rk_calc::Vector3;
 
 #[derive(Debug, Clone)]
 pub struct Plane {
@@ -70,13 +71,36 @@ impl From<Plane> for StepItem {
     }
 }
 
+impl Plane {
+    pub fn new(position: EntityId) -> Self {
+        Plane { position }
+    }
+
+    pub fn new_and_register(position: EntityId, arena: &mut StepItemMap) -> EntityId {
+        let plane = Plane::new(position);
+        arena.insert_default_id(StepItems::new_with_one_item(plane.into()))
+    }
+
+    pub fn register_step_item_map(
+        location: Vector3,
+        axis: Vector3,
+        ref_direction: Vector3,
+        arena: &mut StepItemMap,
+    ) -> Result<EntityId, ConversionStepItemError> {
+        // Create Axis2Placement3D
+        let axis2_placement =
+            Axis2Placement3D::register_step_item_map(location, axis, ref_direction, arena)?;
+        // Create Plane with the Axis2Placement3D reference
+        let plane = Plane::new(axis2_placement);
+        Ok(arena.insert_default_id(StepItems::new_with_one_item(plane.into())))
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::step_entity::Parameter;
     use crate::step_item::{Axis2Placement3D, CartesianPoint};
-    use crate::step_item_map::StepItems;
-    use rk_calc::Vector3;
 
     #[test]
     fn test_plane_from_simple() {

@@ -23,10 +23,10 @@ use super::super::common::{
     expect_single_item_cast, ConversionStepItemError, FromSimple, HasKeyword, StepItemCast,
     ValidateRefs,
 };
-use super::super::StepItem;
+use super::super::{CartesianPoint, StepItem};
 use super::Direction;
 use crate::step_entity::{EntityId, SimpleEntity};
-use crate::step_item_map::StepItemMap;
+use crate::step_item_map::{StepItemMap, StepItems};
 use rk_calc::Vector3;
 
 /// 解析直後（参照未解決）の Axis2Placement3D
@@ -100,6 +100,63 @@ impl From<Axis2Placement3D> for StepItem {
 }
 
 impl Axis2Placement3D {
+    pub fn new(
+        location: EntityId,
+        axis: Option<EntityId>,
+        ref_direction: Option<EntityId>,
+    ) -> Self {
+        Self {
+            location,
+            axis,
+            ref_direction,
+        }
+    }
+
+    pub fn new_and_register(
+        location: EntityId,
+        axis: Option<EntityId>,
+        ref_direction: Option<EntityId>,
+        arena: &mut StepItemMap,
+    ) -> EntityId {
+        let ap = Self::new(location, axis, ref_direction);
+        arena.insert_default_id(StepItems::new_with_one_item(ap.into()))
+    }
+
+    pub fn register_step_item_map(
+        location: Vector3,
+        axis: Vector3,
+        ref_direction: Vector3,
+        arena: &mut StepItemMap,
+    ) -> Result<EntityId, ConversionStepItemError> {
+        // location を登録
+        let location_id = arena.insert_default_id(StepItems::new_with_one_item(
+            CartesianPoint { coords: location }.into(),
+        ));
+
+        // axis を登録
+        let axis_id = arena.insert_default_id(StepItems::new_with_one_item(
+            Direction {
+                vec: axis.normalize(),
+            }
+            .into(),
+        ));
+
+        // ref_direction を登録
+        let ref_direction_id = arena.insert_default_id(StepItems::new_with_one_item(
+            Direction {
+                vec: ref_direction.normalize(),
+            }
+            .into(),
+        ));
+
+        Ok(Self::new_and_register(
+            location_id,
+            Some(axis_id),
+            Some(ref_direction_id),
+            arena,
+        ))
+    }
+
     /// axis の値を取得する
     pub fn axis_value(&self, arena: &StepItemMap) -> Result<Vector3, ConversionStepItemError> {
         if let Some(axis_id) = self.axis {
@@ -160,7 +217,6 @@ mod tests {
     use super::*;
     use crate::step_entity::Parameter;
     use crate::step_item::CartesianPoint;
-    use crate::step_item_map::StepItems;
 
     #[test]
     fn axis2_placement_3d_from_simple() {

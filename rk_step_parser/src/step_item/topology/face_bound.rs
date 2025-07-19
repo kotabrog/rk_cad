@@ -15,7 +15,7 @@ use super::super::common::{
 };
 use super::super::StepItem;
 use crate::step_entity::{EntityId, SimpleEntity};
-use crate::step_item::ValidateRefs;
+use crate::step_item::{EdgeLoop, ValidateRefs};
 use crate::step_item_map::{StepItemMap, StepItems};
 
 #[derive(Debug, Clone)]
@@ -81,13 +81,21 @@ impl FaceBound {
         let face_bound = Self::new(bound, orientation);
         arena.insert_default_id(StepItems::new_with_one_item(face_bound.into()))
     }
+
+    pub fn register_step_item_map_line_default_loop(
+        points: Vec<rk_calc::Vector3>,
+        orientation: bool,
+        arena: &mut StepItemMap,
+    ) -> EntityId {
+        let edge_loop_id = EdgeLoop::register_step_item_map_line_default_loop(points, arena);
+        Self::new_and_register(edge_loop_id, orientation, arena)
+    }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::step_entity::Parameter;
-    use crate::step_item::EdgeLoop;
     use rk_calc::Vector3;
 
     #[test]

@@ -4,7 +4,7 @@ mod topology;
 
 pub use common::{ConversionStepItemError, FromSimple, ValidateRefs};
 pub use geometry::{Axis2Placement3D, CartesianPoint, Direction, Line, Plane, Vector};
-pub use topology::{EdgeCurve, EdgeLoop, FaceBound, OrientedEdge, VertexPoint};
+pub use topology::{AdvancedFace, EdgeCurve, EdgeLoop, FaceBound, OrientedEdge, VertexPoint};
 
 use super::step_entity::SimpleEntity;
 use super::step_item_map::StepItemMap;
@@ -22,6 +22,7 @@ pub enum StepItem {
     OrientedEdge(Box<OrientedEdge>),
     EdgeLoop(Box<EdgeLoop>),
     FaceBound(Box<FaceBound>),
+    AdvancedFace(Box<AdvancedFace>),
 }
 
 impl TryFrom<SimpleEntity> for StepItem {
@@ -47,6 +48,9 @@ impl TryFrom<SimpleEntity> for StepItem {
             )?))),
             "EDGE_LOOP" => Ok(StepItem::EdgeLoop(Box::new(EdgeLoop::from_simple(se)?))),
             "FACE_BOUND" => Ok(StepItem::FaceBound(Box::new(FaceBound::from_simple(se)?))),
+            "ADVANCED_FACE" => Ok(StepItem::AdvancedFace(Box::new(AdvancedFace::from_simple(
+                se,
+            )?))),
             other => Err(ConversionStepItemError::Unsupported(other.into())),
         }
     }
@@ -66,6 +70,7 @@ impl StepItem {
             StepItem::OrientedEdge(_) => "ORIENTED_EDGE",
             StepItem::EdgeLoop(_) => "EDGE_LOOP",
             StepItem::FaceBound(_) => "FACE_BOUND",
+            StepItem::AdvancedFace(_) => "ADVANCED_FACE",
         }
     }
 
@@ -82,6 +87,7 @@ impl StepItem {
             StepItem::OrientedEdge(oriented_edge) => oriented_edge.validate_refs(arena),
             StepItem::EdgeLoop(edge_loop) => edge_loop.validate_refs(arena),
             StepItem::FaceBound(face_bound) => face_bound.validate_refs(arena),
+            StepItem::AdvancedFace(advanced_face) => advanced_face.validate_refs(arena),
         }
     }
 }
