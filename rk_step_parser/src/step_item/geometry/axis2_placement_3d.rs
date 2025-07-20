@@ -127,7 +127,7 @@ impl Axis2Placement3D {
         axis: Vector3,
         ref_direction: Vector3,
         arena: &mut StepItemMap,
-    ) -> Result<EntityId, ConversionStepItemError> {
+    ) -> EntityId {
         // location を登録
         let location_id = arena.insert_default_id(StepItems::new_with_one_item(
             CartesianPoint { coords: location }.into(),
@@ -149,12 +149,7 @@ impl Axis2Placement3D {
             .into(),
         ));
 
-        Ok(Self::new_and_register(
-            location_id,
-            Some(axis_id),
-            Some(ref_direction_id),
-            arena,
-        ))
+        Self::new_and_register(location_id, Some(axis_id), Some(ref_direction_id), arena)
     }
 
     /// axis の値を取得する

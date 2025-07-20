@@ -86,13 +86,13 @@ impl Plane {
         axis: Vector3,
         ref_direction: Vector3,
         arena: &mut StepItemMap,
-    ) -> Result<EntityId, ConversionStepItemError> {
+    ) -> EntityId {
         // Create Axis2Placement3D
         let axis2_placement =
-            Axis2Placement3D::register_step_item_map(location, axis, ref_direction, arena)?;
+            Axis2Placement3D::register_step_item_map(location, axis, ref_direction, arena);
         // Create Plane with the Axis2Placement3D reference
         let plane = Plane::new(axis2_placement);
-        Ok(arena.insert_default_id(StepItems::new_with_one_item(plane.into())))
+        arena.insert_default_id(StepItems::new_with_one_item(plane.into()))
     }
 }
 

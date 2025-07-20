@@ -1,4 +1,4 @@
-//! Representation of the STEP **edge_curve** entity (AIM EXPRESS Library and ISO 10303‑42:2003).
+//! Representation of the STEP **advanced_face** entity (AIM EXPRESS Library and ISO 10303‑42:2003).
 //!
 //! ENTITY advanced_face
 //!    SUBTYPE OF (face_surface);
@@ -73,10 +73,11 @@ use super::super::common::{
     aggregate_to_reference, boolean_to_bool, check_keyword, expect_attr_len, expect_reference,
     expect_single_item, ConversionStepItemError, FromSimple, HasKeyword, StepItemCast,
 };
-use super::super::StepItem;
+use super::super::{Axis2Placement3D, FaceBound, Plane, StepItem};
 use crate::step_entity::{EntityId, SimpleEntity};
 use crate::step_item::ValidateRefs;
 use crate::step_item_map::{StepItemMap, StepItems};
+use rk_calc::Vector3;
 
 #[derive(Debug, Clone)]
 pub struct AdvancedFace {
@@ -171,14 +172,56 @@ impl AdvancedFace {
         let advanced_face = Self::new(face_bounds, face_geometry, same_sense);
         arena.insert_default_id(StepItems::new_with_one_item(advanced_face.into()))
     }
+
+    /// シンプルな正方形の平面を登録する。
+    ///
+    /// Attributes:
+    /// - `size`: 中心から辺までの距離
+    /// - `position`: 平面の中心位置
+    /// - `normal`: 平面の法線ベクトル
+    /// - `ref_direction`: 平面上の参照方向ベクトル
+    /// - `arena`: 登録先の `StepItemMap`
+    pub fn register_square(
+        size: f64,
+        position: Vector3,
+        normal: Vector3,
+        ref_direction: Vector3,
+        arena: &mut StepItemMap,
+    ) -> Result<EntityId, ConversionStepItemError> {
+        let plane_id = Plane::register_step_item_map(position, normal, ref_direction, arena);
+        let plane = arena
+            .get_single_item(plane_id)
+            .and_then(Plane::cast)
+            .ok_or(ConversionStepItemError::UnresolvedRef { id: plane_id })?;
+        let axis2_placement_3d = arena
+            .get_single_item(plane.position)
+            .and_then(Axis2Placement3D::cast)
+            .ok_or(ConversionStepItemError::UnresolvedRef { id: plane.position })?;
+        let [x, y, _z] = axis2_placement_3d.build_axes(arena)?;
+
+        let point1 = position + x * size + y * size;
+        let point2 = position + x * size - y * size;
+        let point3 = position - x * size - y * size;
+        let point4 = position - x * size + y * size;
+
+        let face_bound = FaceBound::register_step_item_map_line_default_loop(
+            vec![point1, point2, point3, point4],
+            true,
+            arena,
+        );
+        Ok(AdvancedFace::new_and_register(
+            vec![face_bound],
+            plane_id,
+            true,
+            arena,
+        ))
+    }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::step_entity::Parameter;
-    use crate::step_item::{FaceBound, Plane};
-    use rk_calc::Vector3;
 
     #[test]
     fn test_advanced_face_from_simple() {
@@ -328,8 +371,7 @@ mod tests {
             Vector3::new(0.0, 0.0, 1.0),
             Vector3::new(1.0, 0.0, 0.0),
             &mut arena,
-        )
-        .unwrap();
+        );
         let advanced_face = AdvancedFace::new(vec![face_bound], plane, true);
         assert!(advanced_face.validate_refs(&arena).is_ok());
     }

@@ -69,6 +69,10 @@ impl StepItemMap {
     pub fn iter(&self) -> impl Iterator<Item = (&EntityId, &StepItems)> {
         self.items.iter()
     }
+
+    pub fn get_single_item(&self, id: EntityId) -> Option<&StepItem> {
+        self.items.get(&id).and_then(|items| items.get_single())
+    }
 }
 
 impl std::ops::Index<EntityId> for StepItemMap {
