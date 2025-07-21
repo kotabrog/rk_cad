@@ -1,5 +1,5 @@
 use super::CalcError;
-use std::ops::{Add, Mul, Sub};
+use std::ops::{Add, Mul, Neg, Sub};
 
 /// 3D ベクトル／点を表す型（名前を Vector3 に変更）
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -99,7 +99,7 @@ impl Add for Vector3 {
 impl Sub for Vector3 {
     type Output = Self;
     fn sub(self, rhs: Self) -> Self {
-        Vector3::new(self.x - rhs.x, self.y - rhs.y, self.z - rhs.z)
+        self + (-rhs)
     }
 }
 
@@ -107,6 +107,13 @@ impl Mul<f64> for Vector3 {
     type Output = Self;
     fn mul(self, rhs: f64) -> Self {
         Vector3::new(self.x * rhs, self.y * rhs, self.z * rhs)
+    }
+}
+
+impl Neg for Vector3 {
+    type Output = Self;
+    fn neg(self) -> Self {
+        self * -1.0
     }
 }
 
@@ -259,5 +266,14 @@ mod tests {
         assert_eq!(result.x, 2.0);
         assert_eq!(result.y, 4.0);
         assert_eq!(result.z, 6.0);
+    }
+
+    #[test]
+    fn vector3_neg() {
+        let vector = Vector3::new(1.0, -2.0, 3.0);
+        let negated = -vector;
+        assert_eq!(negated.x, -1.0);
+        assert_eq!(negated.y, 2.0);
+        assert_eq!(negated.z, -3.0);
     }
 }

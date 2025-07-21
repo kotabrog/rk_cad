@@ -4,7 +4,7 @@ mod geometry;
 mod topology;
 
 pub use common::{ConversionStepItemError, FromSimple, ValidateRefs};
-pub use frame::ClosedShell;
+pub use frame::{ClosedShell, ManifoldSolidBrep};
 pub use geometry::{Axis2Placement3D, CartesianPoint, Direction, Line, Plane, Vector};
 pub use topology::{AdvancedFace, EdgeCurve, EdgeLoop, FaceBound, OrientedEdge, VertexPoint};
 
@@ -26,6 +26,7 @@ pub enum StepItem {
     FaceBound(Box<FaceBound>),
     AdvancedFace(Box<AdvancedFace>),
     ClosedShell(Box<ClosedShell>),
+    ManifoldSolidBrep(Box<ManifoldSolidBrep>),
 }
 
 impl TryFrom<SimpleEntity> for StepItem {
@@ -57,6 +58,9 @@ impl TryFrom<SimpleEntity> for StepItem {
             "CLOSED_SHELL" => Ok(StepItem::ClosedShell(Box::new(ClosedShell::from_simple(
                 se,
             )?))),
+            "MANIFOLD_SOLID_BREP" => Ok(StepItem::ManifoldSolidBrep(Box::new(
+                ManifoldSolidBrep::from_simple(se)?,
+            ))),
             other => Err(ConversionStepItemError::Unsupported(other.into())),
         }
     }
@@ -78,6 +82,7 @@ impl StepItem {
             StepItem::FaceBound(_) => "FACE_BOUND",
             StepItem::AdvancedFace(_) => "ADVANCED_FACE",
             StepItem::ClosedShell(_) => "CLOSED_SHELL",
+            StepItem::ManifoldSolidBrep(_) => "MANIFOLD_SOLID_BREP",
         }
     }
 
@@ -96,6 +101,9 @@ impl StepItem {
             StepItem::FaceBound(face_bound) => face_bound.validate_refs(arena),
             StepItem::AdvancedFace(advanced_face) => advanced_face.validate_refs(arena),
             StepItem::ClosedShell(closed_shell) => closed_shell.validate_refs(arena),
+            StepItem::ManifoldSolidBrep(manifold_solid_brep) => {
+                manifold_solid_brep.validate_refs(arena)
+            }
         }
     }
 }

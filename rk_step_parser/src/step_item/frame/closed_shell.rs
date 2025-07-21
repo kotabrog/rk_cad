@@ -34,10 +34,11 @@ use super::super::common::{
     aggregate_to_reference, check_keyword, expect_attr_len, expect_single_item,
     ConversionStepItemError, FromSimple, HasKeyword, StepItemCast,
 };
-use super::super::StepItem;
+use super::super::{AdvancedFace, StepItem};
 use crate::step_entity::{EntityId, SimpleEntity};
 use crate::step_item::ValidateRefs;
 use crate::step_item_map::{StepItemMap, StepItems};
+use rk_calc::Vector3;
 
 #[derive(Debug, Clone)]
 pub struct ClosedShell {
@@ -102,14 +103,45 @@ impl ClosedShell {
         let shell = ClosedShell::new(cfs_faces);
         arena.insert_default_id(StepItems::new_with_one_item(shell.into()))
     }
+
+    pub fn register_cube(
+        size: f64,
+        center: Vector3,
+        axis1: Vector3,
+        axis2: Vector3,
+        arena: &mut StepItemMap,
+    ) -> Result<EntityId, ConversionStepItemError> {
+        let axis1 = axis1.normalize();
+        let axis2 = axis2.normalize();
+        let axis3 = axis1.cross(&axis2);
+        let axis1 = axis1 - axis3 * axis3.dot(&axis1);
+        let axis2 = axis3.cross(&axis1).normalize();
+
+        let square1 =
+            AdvancedFace::register_square(size, center + axis1 * size, axis1, axis2, arena)?;
+        let square2 =
+            AdvancedFace::register_square(size, center - axis1 * size, -axis1, -axis2, arena)?;
+        let square3 =
+            AdvancedFace::register_square(size, center + axis2 * size, axis2, axis1, arena)?;
+        let square4 =
+            AdvancedFace::register_square(size, center - axis2 * size, -axis2, -axis1, arena)?;
+        let square5 =
+            AdvancedFace::register_square(size, center + axis3 * size, axis3, axis1, arena)?;
+        let square6 =
+            AdvancedFace::register_square(size, center - axis3 * size, -axis3, -axis1, arena)?;
+
+        Ok(ClosedShell::new_and_register(
+            vec![square1, square2, square3, square4, square5, square6],
+            arena,
+        ))
+    }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::step_entity::Parameter;
-    use crate::step_item::{AdvancedFace, CartesianPoint};
-    use rk_calc::Vector3;
+    use crate::step_item::CartesianPoint;
 
     #[test]
     fn test_closed_shell_from_simple() {
