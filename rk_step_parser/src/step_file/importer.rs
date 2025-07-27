@@ -1,19 +1,12 @@
-//! ファイル全体を扱う層
+//! ファイル全体のimport処理
 
+use super::StepFile;
 use thiserror::Error;
 
 #[derive(Debug, Error, PartialEq)]
 pub enum StepFileParseError {
     #[error("unterminated record at line {lineno}: {line}")]
     Unterminated { lineno: usize, line: String },
-}
-
-/// STEP ファイルを 3 つのセクションに分割して保持する
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct StepFile {
-    pub header: Vec<String>,   // ISO-10303-21 HEADER;
-    pub entities: Vec<String>, // DATA; 〜 ENDSEC; までの各エンティティ行
-    pub trailer: Vec<String>,  // END-ISO-10303-21 以降
 }
 
 /// いま読んでいるセクションを示す内部状態

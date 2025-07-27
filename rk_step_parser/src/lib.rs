@@ -5,7 +5,7 @@ mod exporter;
 mod import_step;
 pub mod old;
 mod step_entity;
-mod step_file;
+pub mod step_file;
 mod step_item;
 mod step_item_map;
 pub mod typed;
